@@ -1,0 +1,13 @@
+{
+	"categories": {
+			"match" : "allowed",
+			"mismatch" : "denied",
+			"low_confidence" : "removed",
+			"no_plate" : "removed"  
+			},
+	"allowed_plates" : [ 
+				"7TXD825",
+				"ZIXD825"
+			]
+
+}
