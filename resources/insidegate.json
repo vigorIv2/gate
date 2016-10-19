@@ -1,0 +1,21 @@
+{
+	"level" : [
+				{ 
+					"pentagon" : { "area" : 105 },
+					"triangle" : { "area" : 42.67 }
+				},
+				{
+					"rectangle" : { "area" : 109.67 },
+					"triangle" : { "area" : 83.17 }
+				},
+				{
+					"pentagon" : { "area" : 65 },
+					"circle" : { "area" : 50.5 },
+					"circle" : { "area" : 64 }
+				},
+				{
+					"triangle" : { "area" : 64 },
+					"rectangle" : { "area" : 147.67 }
+				}
+			]
+}
