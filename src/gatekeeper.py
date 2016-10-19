@@ -13,7 +13,31 @@ class GateKeeper:
 	def __init__(self, ):
 		logging.basicConfig(filename='/var/log/motion/gatekeeper.log',format='%(asctime)s %(levelname)s %(message)s',level=logging.DEBUG)
 
-	def checkgate(self,mygate_json,image_name) :
+	DEFAULT_DEVIATION=7 # 5% deviation of area
+
+	# checks that area "a1" is within deviation "d" % fomr a2
+	def within(self,a1,a2,d=DEFAULT_DEVIATION):
+		df=(a1*d)/100 # deviation 
+		res=( a1 < (a2+df) and a1 > (a2-df) ) # a within deviation range
+		return res # a within deviation range
+		
+  # to find a given shape and area in 
+	def find_shape(self,jmygate,shape,area):
+		lr=0
+		for l in jmygate["levels"]:
+#			print l
+			for s in l["shapes"]:
+				rshape = unicode(shape, "utf-8")
+				if ( rshape == u'square' ):
+					rshape = u'rectangle' # treat square as rectangles
+				if ( rshape in s[u'shape'] ):
+					a1=s[u'area']
+					if ( self.within(a1,area) ):
+						return lr
+			lr+=1
+		return None
+		
+	def checkgate(self,mygate_json,image_name,visual_trace = True) :
 		if ( not os.path.isfile(image_name) ):
 			logging.warn("image file not found "+image_name)
 			return
@@ -22,12 +46,11 @@ class GateKeeper:
 			logging.warn("image file empty, ignoring "+image_name)
 			return
 
+		logging.info("processing image_name="+image_name+" json="+mygate_json)
 		try:
 			with open(mygate_json, 'r') as jsonfile:
 				myg=jsonfile.read()
 			jmyg=json.loads(myg)
-			for l in jmyg["level"]:
-				print l
 			# load the image and resize it to a smaller factor so that
 			# the shapes can be approximated better
 			image = cv2.imread(image_name)
@@ -45,41 +68,29 @@ class GateKeeper:
 			# shape detector
 			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
-		
+	
+			ML = -1	
 			# loop over the contours
 			for c in cnts:
 				# compute the center of the contour, then detect the name of the
 				# shape using only the contour
-				#	print c
 				M = cv2.moments(c)
-				#	print M
-				#	A = cv2.contourArea(c)
 				shape = self.detect(c)
-				A = M["m00"]
-				print shape, " ", A
-				if (A > 698 or A < 20):
+				A = M["m00"] # Area
+				L = self.find_shape(jmyg,shape,A)
+				if ( A > 20) :
+					print "trying ",shape, " ", A, " ", L
+				if ( L == None ):
 					continue
-				if (M["mu02"] < 100 ) :
+				if ( L < ML ):
 					continue
-
-				if (M["mu02"] > 26000 ) :
-					continue
-
-				if (M["m00"] == 0):
-					M["m00"]=1
-					continue
+				ML = L
+				print "recognized", shape, " ", A, " ", L
+				logging.info("in file "+image_name+ " recognized shape="+ shape+ " area="+ str(A)+ " level="+ str(L))
 
 				cX = int((M["m10"] / M["m00"]) * ratio)
 				cY = int((M["m01"] / M["m00"]) * ratio)
 
-				if ( shape == "circle" and (A < 49 or A > 69)):
-					continue
-				if ( shape == "pentagon" and (A < 63 or A > 107)):
-					continue
-				if ( shape == "triangle" and (A < 41 or A > 84)):
-					continue
-				if ( shape == "rectangle" and (A < 107 or A > 152)):
-					continue
 				# multiply the contour (x, y)-coordinates by the resize ratio,
 				# then draw the contours and the name of the shape on the image
 				c = c.astype("float")
@@ -89,8 +100,9 @@ class GateKeeper:
 				cv2.putText(image, shape, (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
 				# show the output image
-				cv2.imshow("Image", image)
-				cv2.waitKey(0)
+				if ( visual_trace ):
+					cv2.imshow("Image", image)
+					cv2.waitKey(0)
 
 		except Exception, err:
 			logging.exception('Error from throws():')

@@ -1,21 +1,25 @@
 {
-	"level" : [
-				{ 
-					"pentagon" : { "area" : 105 },
-					"triangle" : { "area" : 42.67 }
+	"levels" : [
+				{ "shapes" : [
+						{ "shape" : "pentagon" , "area" : 105 },
+						{ "shape" : "triangle" , "area" : 42.67 }
+					]
 				},
-				{
-					"rectangle" : { "area" : 109.67 },
-					"triangle" : { "area" : 83.17 }
+				{ "shapes" : [
+						{ "shape" : "rectangle" , "area" : 109.67 },
+						{ "shape" : "triangle" , "area" : 83.17 }
+					]
 				},
-				{
-					"pentagon" : { "area" : 65 },
-					"circle" : { "area" : 50.5 },
-					"circle" : { "area" : 64 }
+				{ "shapes" : [
+						{ "shape" : "pentagon" , "area" : 65 },
+						{ "shape" : "circle" , "area" : 50.5 },
+						{ "shape" : "circle" , "area" : 64 }
+					]
 				},
-				{
-					"triangle" : { "area" : 64 },
-					"rectangle" : { "area" : 147.67 }
+				{ "shapes" : [
+						{ "shape" : "triangle" , "area" : 64 },
+						{ "shape" : "rectangle" , "area" : 147.67 }
+					]
 				}
 			]
 }
