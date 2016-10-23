@@ -22,6 +22,16 @@ class gatedb:
 			result.append(row)
 		return result
 
+	def gate_state(self):
+		for row in self.conn.execute('select open from gate_state order by ts desc limit 1;'):
+			return row[0] == 1
+		return None
+
+	def car_state(self):
+		for row in self.conn.execute('select open from car_parked order by ts desc limit 1;'):
+			return row[0] == 1
+		return True # for now let us pretend it is always there
+
 	def save_gate_state(self,gate_open = False): # 0 - False, 1 - True 
 		with self.conn:
 			self.conn.execute("insert into gate_state(open) values (?)", ((1 if gate_open else 0),))

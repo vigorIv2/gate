@@ -9,7 +9,7 @@ import cv2
 import gatedb
 
 class GateKeeper:
-	' Common base class for GateKeeper software '
+	' base class for GateKeeper software '
 
 	gdb = None
 	def __init__(self, ):
@@ -70,6 +70,8 @@ class GateKeeper:
 	
 			ML = -1	
 			rcnt = 0
+			contDet = 0 # number of countours detected
+			trying = ""	
 			# loop over the contours
 			for c in cnts:
 				# compute the center of the contour, then detect the name of the
@@ -79,7 +81,8 @@ class GateKeeper:
 				A = M["m00"] # Area
 				L = self.find_shape(shapes,shape,A)
 				if ( A > 10) :
-					logging.debug( "trying "+shape+ " "+ str(A)+ " "+ str(L))
+					contDet += 1
+					trying += "s="+shape+ " a="+ str(A)+"; "
 				if ( L == None ):
 					continue
 				if ( L < ML ):
@@ -103,11 +106,23 @@ class GateKeeper:
 				if ( visual_trace ):
 					cv2.imshow("Image", image)
 					cv2.waitKey(0)
-			print rcnt, len(shapes)
-			self.gdb.save_gate_state(rcnt < (len(shapes)*0.66))
+			logging.debug("tried "+trying)
+
+			logging.info("contours detected "+str(contDet)+" shapes recognized "+str(rcnt)+ " shapes expected total "+str(len(shapes)))
+			if ( contDet > len(shapes)*3 ): # it usually recognizes lots of shpaes
+				new_gate_state = rcnt < (len(shapes)*0.66)
+				if ( self.gdb.gate_state() == new_gate_state ):
+					logging.info("no gate state change detected, it is still open = "+str(new_gate_state))
+				else:
+					self.gate_state_changed(new_gate_state)
+			else:
+				logging.debug("Too little contours detected, it is likely because too dark due to gate is closed or night")  
 		except Exception, err:
 			logging.exception('Error from throws():')
 
+	def gate_state_changed(self,new_state):
+		logging.info("gate state changed, it is now open = "+str(new_state))
+		self.gdb.save_gate_state(new_state)
 
 	def detect(self, c):
 		# initialize the shape name and approximate the contour
