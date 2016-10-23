@@ -4,4 +4,5 @@
 import gatedb
 
 gdb=gatedb.gatedb()
+gdb.get_shapes()
 

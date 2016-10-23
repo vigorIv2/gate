@@ -6,11 +6,14 @@ import sys
 import subprocess
 import imutils
 import cv2
+import gatedb
 
 class GateKeeper:
 	' Common base class for GateKeeper software '
 
+	gdb = None
 	def __init__(self, ):
+		self.gdb=gatedb.gatedb()
 		logging.basicConfig(filename='/var/log/motion/gatekeeper.log',format='%(asctime)s %(levelname)s %(message)s',level=logging.DEBUG)
 
 	DEFAULT_DEVIATION=7 # 5% deviation of area
@@ -21,23 +24,21 @@ class GateKeeper:
 		res=( a1 < (a2+df) and a1 > (a2-df) ) # a within deviation range
 		return res # a within deviation range
 		
-  # to find a given shape and area in 
-	def find_shape(self,jmygate,shape,area):
+  # to find a given shape and area in the array loaded from databse
+	def find_shape(self,shapes,shape,area):
 		lr=0
-		for l in jmygate["levels"]:
-#			print l
-			for s in l["shapes"]:
-				rshape = unicode(shape, "utf-8")
-				if ( rshape == u'square' ):
-					rshape = u'rectangle' # treat square as rectangles
-				if ( rshape in s[u'shape'] ):
-					a1=s[u'area']
-					if ( self.within(a1,area) ):
-						return lr
+		for s in shapes:
+			print s
+			rshape = unicode(s[1], "utf-8")
+			if ( rshape == u'square' ):
+				rshape = u'rectangle' # treat square as rectangles
+			if ( rshape == shape ):
+				if ( self.within(s[2],area) ):
+					return lr
 			lr+=1
 		return None
 		
-	def checkgate(self,mygate_json,image_name,visual_trace = True) :
+	def checkgate(self,image_name,visual_trace = True) :
 		if ( not os.path.isfile(image_name) ):
 			logging.warn("image file not found "+image_name)
 			return
@@ -46,13 +47,12 @@ class GateKeeper:
 			logging.warn("image file empty, ignoring "+image_name)
 			return
 
-		logging.info("processing image_name="+image_name+" json="+mygate_json)
+		logging.info("processing image_name="+image_name)
 		try:
-			with open(mygate_json, 'r') as jsonfile:
-				myg=jsonfile.read()
-			jmyg=json.loads(myg)
+			shapes=self.gdb.get_shapes()
 			# load the image and resize it to a smaller factor so that
 			# the shapes can be approximated better
+
 			image = cv2.imread(image_name)
 			resized = imutils.resize(image, width=300)
 			ratio = image.shape[0] / float(resized.shape[0])
@@ -77,7 +77,7 @@ class GateKeeper:
 				M = cv2.moments(c)
 				shape = self.detect(c)
 				A = M["m00"] # Area
-				L = self.find_shape(jmyg,shape,A)
+				L = self.find_shape(shapes,shape,A)
 				if ( A > 20) :
 					print "trying ",shape, " ", A, " ", L
 				if ( L == None ):

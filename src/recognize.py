@@ -7,6 +7,7 @@ import time
 import os
 import logging
 import memcache
+
 import RPi.GPIO as GPIO ## Import GPIO library
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
