@@ -28,8 +28,7 @@ class GateKeeper:
 	def find_shape(self,shapes,shape,area):
 		lr=0
 		for s in shapes:
-			print s
-			rshape = unicode(s[1], "utf-8")
+			rshape = s[1]
 			if ( rshape == u'square' ):
 				rshape = u'rectangle' # treat square as rectangles
 			if ( rshape == shape ):
@@ -78,14 +77,13 @@ class GateKeeper:
 				shape = self.detect(c)
 				A = M["m00"] # Area
 				L = self.find_shape(shapes,shape,A)
-				if ( A > 20) :
-					print "trying ",shape, " ", A, " ", L
+				if ( A > 10) :
+					logging.debug( "trying "+shape+ " "+ str(A)+ " "+ str(L))
 				if ( L == None ):
 					continue
 				if ( L < ML ):
 					continue
 				ML = L
-				print "recognized", shape, " ", A, " ", L
 				logging.info("in file "+image_name+ " recognized shape="+ shape+ " area="+ str(A)+ " level="+ str(L))
 
 				cX = int((M["m10"] / M["m00"]) * ratio)
