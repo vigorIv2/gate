@@ -20,5 +20,8 @@ class gatedb:
 		result = []
 		for row in self.conn.execute('SELECT * FROM known_shapes ORDER BY id'):
 			result.append(row)
-#		print result
 		return result
+
+	def save_gate_state(self,gate_open = False): # 0 - False, 1 - True 
+		with self.conn:
+			self.conn.execute("insert into gate_state(open) values (?)", ((1 if gate_open else 0),))

@@ -69,6 +69,7 @@ class GateKeeper:
 			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
 	
 			ML = -1	
+			rcnt = 0
 			# loop over the contours
 			for c in cnts:
 				# compute the center of the contour, then detect the name of the
@@ -84,6 +85,7 @@ class GateKeeper:
 				if ( L < ML ):
 					continue
 				ML = L
+				rcnt += 1
 				logging.info("in file "+image_name+ " recognized shape="+ shape+ " area="+ str(A)+ " level="+ str(L))
 
 				cX = int((M["m10"] / M["m00"]) * ratio)
@@ -101,7 +103,8 @@ class GateKeeper:
 				if ( visual_trace ):
 					cv2.imshow("Image", image)
 					cv2.waitKey(0)
-
+			print rcnt, len(shapes)
+			self.gdb.save_gate_state(rcnt < (len(shapes)*0.66))
 		except Exception, err:
 			logging.exception('Error from throws():')
 
