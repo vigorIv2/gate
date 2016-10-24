@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import os
 import logging
 import json
@@ -7,6 +10,8 @@ import subprocess
 import imutils
 import cv2
 import gatedb
+import re
+import datetime
 
 class GateKeeper:
 	' base class for GateKeeper software '
@@ -156,3 +161,156 @@ class GateKeeper:
 
 		# return the name of the shape
 		return shape
+
+	def ping6(self, interface, addr):
+		# ping6 -c 1 -I eth0 -w 1 ff02::1
+		if ( ":" in addr ):
+			pingcmd="ping6"
+		else:
+			pingcmd="ping"  
+			addr = addr.split("%")[0]
+		print ">> ", pingcmd, " ", addr
+		pcmd=[pingcmd, '-c', '1', '-s', '1', '-I', interface, '-w', '1', addr]
+		logging.debug(" ".join(pcmd))
+		p = subprocess.Popen(pcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		out, err = p.communicate()
+
+	def broadcastPing6(self, interface, count):
+		# ping6 -c 3 -I eth0 ff02::1
+		print "<<broadcast ping6 "
+		neighbors = []
+		pcmd=['ping6', '-s', '1', '-c', count, '-I', interface, 'ff02::1']
+		logging.debug("broadcast "+" ".join(pcmd))
+		p = subprocess.Popen(pcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		out, err = p.communicate()
+
+		if ( len(err) != 0 ): 
+			print "Error in ping6 " , err
+			return 
+		for l in out.split("\n"):
+			ls=l.split(" ") 
+			if ( l == "" or ls < 2 ):
+				break # end of ping6 command output, further just stats, ignore that
+			if ( ls[0] != 'PING' ):
+				neighbors.append("%".join([ls[3].rstrip(':'),interface]))
+
+		return neighbors
+
+	def current_neighbors(self):
+    # ip neigh 
+    # fe80::6203:8ff:fe91:5c56 dev eth0 lladdr 60:03:08:91:5c:56 REACHABLE
+    # fe80::76d0:2bff:fecf:1257 dev eth0 lladdr 74:d0:2b:cf:12:57 STALE
+
+		response_json = {}
+		pcmd=['ip', 'neigh']
+		logging.debug(" ".join(pcmd))
+		p = subprocess.Popen(pcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		out, err = p.communicate()
+
+		if ( len(err) != 0 ):
+			logging.error("Error in IP " +str(err))
+			return
+		mac_pattern = re.compile("^([A-Fa-f0-9\:]+)*$")
+		macs=[]
+		for l in out.split("\n"):
+			ls=l.split(" ")
+#			print l
+			if ( l == "" or ls < 5 ):
+				break # end of ip command output, ignore rest
+			if ( mac_pattern.match(ls[4])):
+				macs.append({"mac" : ls[4], "status" : ls[5], "ip" : "%".join([ls[0],ls[2]])})
+
+		response_json["neighbors"] = macs
+		return response_json
+
+	def lookup_brand(self,mac):
+		return self.gdb.oui_vendor(mac.lower()[:8])
+
+	def lookup_neighbor(self,neighbors,key,cn):
+		keyl=key.lower()
+		for n in neighbors:
+			if ( n[cn] == keyl ):
+				return n
+		return None
+		 
+	def neighborhood_watch(self,trusted_neighbors):
+		num=7
+		while True:
+			pn=self.gdb.get_neighborhood_state()
+			cn=[]
+			ns=[]
+			if ( (num % 7) == 0 ): 
+				neigh=self.broadcastPing6('eth0','1')
+			num += 1 
+    #  print neigh
+			neighm=self.current_neighbors()
+    #  print neighm
+			for n in neighm['neighbors']:
+    #    print "neighbor:",n
+				brand=self.lookup_brand(n['mac'].lower())
+				ln=self.lookup_neighbor(trusted_neighbors,n['mac'],2)
+				ns.append(n)
+				if ( ln != None ):
+					print "======= trusted mac ", n, " ",ln[3]," ", brand 
+					cn.append(ln[0])
+					if ( n['status'] == 'STALE' ):
+						self.ping6('eth0', n['ip'])
+					else:
+						if ( not self.lookup_prev_neighbors(pn,n['status'],ln) ):
+							self.new_neighbor(ln)
+						self.gdb.save_neighbor_state(n['status'],ln[0])
+				else:
+					jip=n['ip'].lower().split("%")[0]
+					lin=self.lookup_neighbor(trusted_neighbors,n['mac'],2)
+					if (lin != None):
+						print "======= trusted ip ", n, " ", jin[3]," ", brand
+						cn.append(lin[0])
+						if ( n['status'] == 'STALE' ):
+							self.ping6('eth0', n['ip'])
+						else:
+							if ( not self.lookup_prev_neighbors(pn,n['status'],lin) ):
+								self.new_neighbor(lin)
+							self.gdb.save_neighbor_state(n['status'],lin[0])
+
+			print "-=-=-=-=-=-=-=-==-=---=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+#			logging.debug("neighborhood "+str(ns)) 
+			for n in pn:
+				if ( not n[0] in cn ):
+					self.neighbor_away(n)
+					cn.append(n[0]) # so not to drop it again
+			time.sleep(1.9)
+
+	def lookup_prev_neighbors(self,pn,st,ln):
+		for l in pn:
+			if ( l[0] == ln[0] ):
+				return True
+		return False
+	
+	def open_gate(self):
+		logging.info("Command to open gate")
+		
+	def close_gate(self):
+		logging.info("Command to close gate")
+		
+	def new_neighbor(self,ln):
+		gs=self.gdb.gate_state()
+		logging.info("new neighbor "+ str(ln)+" gate state open = "+str(gs))
+		if ( gs == False ):
+			self.open_gate()
+			
+	def neighbor_away(self,ln):
+		# check to see when status was last updated
+		few_min_ago_ts=datetime.datetime.now() - datetime.timedelta(minutes=2)
+		few_min_ago=few_min_ago_ts.strftime('%Y-%m-%d %H:%M:%S')
+		logging.debug("neighbor went away "+ str(ln)+" min_ago "+few_min_ago)
+
+		if ( few_min_ago > ln[2] ):
+			if ( self.gdb.gate_state() ):
+				self.close_gate()
+			logging.info("newghbor "+str(ln)+" away for too long, deleting neighbor state")
+			self.gdb.drop_neighbor_state(ln[0])
+			
+	def daemonize(self):
+		self.neighborhood_watch(self.gdb.get_trusted_neighbors())
+
+
