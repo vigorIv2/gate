@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="e7b705a3-9288-418c-a6ab-31a99f4f5329" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/db/garage.db" afterPath="$PROJECT_DIR$/db/garage.db" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/gatekeeper.py" afterPath="$PROJECT_DIR$/src/gatekeeper.py" />
-    </list>
+    <list default="true" id="e7b705a3-9288-418c-a6ab-31a99f4f5329" name="Default" comment="" />
     <ignored path="gate.iws" />
     <ignored path=".idea/workspace.xml" />
     <ignored path=".idea/dataSources.local.xml" />
@@ -28,7 +24,7 @@
       <file leaf-file-name="cropimg.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/cropimg.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="60">
+            <state relative-caret-position="30">
               <caret line="4" column="22" selection-start-line="4" selection-start-column="22" selection-end-line="4" selection-end-column="22" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
@@ -40,7 +36,7 @@
       <file leaf-file-name="db_schema.sql" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/db_schema.sql">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-465">
+            <state relative-caret-position="0">
               <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
             </state>
@@ -80,8 +76,8 @@
       <file leaf-file-name="gatekeeper.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/gatekeeper.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-3715">
-              <caret line="20" column="0" selection-start-line="20" selection-start-column="0" selection-end-line="20" selection-end-column="0" />
+            <state relative-caret-position="15">
+              <caret line="27" column="30" selection-start-line="27" selection-start-column="30" selection-end-line="27" selection-end-column="30" />
               <folding />
             </state>
           </provider>
@@ -153,6 +149,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scratches" />
       <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
@@ -202,7 +199,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -266,6 +262,58 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/cropimg.py">
       <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="30">
+          <caret line="4" column="22" selection-start-line="4" selection-start-column="22" selection-end-line="4" selection-end-column="22" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/db_schema.sql">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/gatedb.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <marker date="1478583673000" expanded="true" signature="393:431" ph="SELECT * FRO... known_shapes" />
+            <marker date="1478583673000" expanded="true" signature="554:636" ph="SELECT id,ip... trusted_neighbors" />
+            <marker date="1478583673000" expanded="true" signature="734:786" ph="select open gate_state" />
+            <marker date="1478583673000" expanded="true" signature="888:929" ph="select vendo... oui_vendor" />
+            <marker date="1478583673000" expanded="true" signature="1032:1084" ph="select open car_parked" />
+            <marker date="1478583673000" expanded="true" signature="1279:1318" ph="insert into gate_state... " />
+            <marker date="1478583673000" expanded="true" signature="1438:1501" ph="replace into... neighborhood_state" />
+            <marker date="1478583673000" expanded="true" signature="1603:1655" ph="delete from " />
+            <marker date="1478583673000" expanded="true" signature="1753:1852" ph="SELECT neigh... neighborhood_state" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/gatedb_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/gatekeeper.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/cropimg.py">
+      <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
@@ -312,7 +360,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -320,7 +367,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -335,7 +381,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -343,7 +388,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -375,7 +419,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/db_schema.sql">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-465">
+        <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
@@ -383,7 +427,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/cropimg.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="60">
+        <state relative-caret-position="30">
           <caret line="4" column="22" selection-start-line="4" selection-start-column="22" selection-end-line="4" selection-end-column="22" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
@@ -393,8 +437,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/gatekeeper.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3715">
-          <caret line="20" column="0" selection-start-line="20" selection-start-column="0" selection-end-line="20" selection-end-column="0" />
+        <state relative-caret-position="15">
+          <caret line="27" column="30" selection-start-line="27" selection-start-column="30" selection-end-line="27" selection-end-column="30" />
           <folding />
         </state>
       </provider>
