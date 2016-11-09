@@ -23,7 +23,7 @@ class GateKeeper:
 
 	DEFAULT_DEVIATION=7 # 5% deviation of area
 
-	# checks that area "a1" is within deviation "d" % fomr a2
+	# checks that area "a1" is within deviation "d" % from a2
 	def within(self,a1,a2,d=DEFAULT_DEVIATION):
 		df=(a1*d)/100 # deviation 
 		res=( a1 < (a2+df) and a1 > (a2-df) ) # a within deviation range
@@ -217,8 +217,8 @@ class GateKeeper:
 
 	def current_neighbors(self):
 		# ip neigh
-    	# fe80::6203:8ff:fe91:5c56 dev eth0 lladdr 60:03:08:91:5c:56 REACHABLE
-    	# fe80::76d0:2bff:fecf:1257 dev eth0 lladdr 74:d0:2b:cf:12:57 STALE
+    # fe80::6203:8ff:fe91:5c56 dev eth0 lladdr 60:03:08:91:5c:56 REACHABLE
+    # fe80::76d0:2bff:fecf:1257 dev eth0 lladdr 74:d0:2b:cf:12:57 STALE
 
 		response_json = {}
 		pcmd=['ip', 'neigh']
@@ -233,7 +233,6 @@ class GateKeeper:
 		macs=[]
 		for l in out.split("\n"):
 			ls=l.split(" ")
-#			print l
 			if ( l == "" or ls < 5 ):
 				break # end of ip command output, ignore rest
 			if ( mac_pattern.match(ls[4])):
@@ -251,7 +250,7 @@ class GateKeeper:
 			if ( n[cn] == keyl ):
 				return n
 		return None
-		 
+
 	def neighborhood_watch(self,trusted_neighbors):
 		num=7
 		while True:
@@ -289,7 +288,6 @@ class GateKeeper:
 							self.gdb.save_neighbor_state(n['status'],lin[0])
 
 			print "-=-=-=-=-=-=-=-==-=---=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
-#			logging.debug("neighborhood "+str(ns)) 
 			for n in pn:
 				if ( not n[0] in cn ):
 					self.neighbor_away(n)

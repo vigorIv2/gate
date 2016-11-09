@@ -24,7 +24,7 @@ class gatedb:
 
 	def get_events(self):
 		result = []
-		for row in self.conn.execute('SELECT * FROM security ORDER BY id'):
+		for row in self.conn.execute('SELECT * FROM security'):
 			result.append(row)
 		return result
 

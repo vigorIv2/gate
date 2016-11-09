@@ -1,22 +1,22 @@
 DROP TABLE if exists security;
 
 CREATE TABLE if not exists security(
-  camera int, 
-  filename varchar(128) not null, 
-  frame int,
-  file_type int, 
-  time_stamp timestamp(14), 
-  text_event varchar(40)
+	camera int,
+	filename varchar(128) not null,
+	frame int,
+	file_type int,
+	time_stamp timestamp(14),
+	text_event varchar(40)
 );
 
 DROP TABLE if exists trusted_neighbors;
 
 CREATE TABLE if not exists trusted_neighbors(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ip varchar(128), 
-  mac varchar(40),
-	name varchar(40), 
-  ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+	ip varchar(128),
+	mac varchar(40),
+	name varchar(40),
+	ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 delete from trusted_neighbors;
@@ -30,7 +30,7 @@ select * from trusted_neighbors;
 DROP TABLE if exists regions;
 
 CREATE TABLE if not exists regions(
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
   name varchar(40),
   left int, 
 	upper int, 
@@ -48,26 +48,26 @@ select * from regions;
 DROP TABLE if exists neighborhood_state;
 
 CREATE TABLE if not exists neighborhood_state(
-  ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	state varchar(40),
-  neighbor_id INTEGER,
-  FOREIGN KEY(neighbor_id) REFERENCES trusted_neighbors(id)
+	neighbor_id INTEGER,
+	FOREIGN KEY(neighbor_id) REFERENCES trusted_neighbors(id)
 );
 CREATE UNIQUE INDEX neighbor_state_idx on neighborhood_state (state,neighbor_id);
 
 DROP TABLE if exists gate_button_event;
 
 CREATE TABLE if not exists gate_button_event(
-  no tinyint, 
-  kind varchar(20),
-  ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+	no tinyint,
+	kind varchar(20),
+	ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 DROP TABLE if exists oui_vendor;
 
 CREATE TABLE if not exists oui_vendor(
-  oui char(8),
-  vendor varchar(50)
+	oui char(8),
+	vendor varchar(50)
 );
 CREATE UNIQUE INDEX oui_idx on oui_vendor (oui);
 insert into oui_vendor(oui,vendor) values('f4:6d:04','Asustek');
