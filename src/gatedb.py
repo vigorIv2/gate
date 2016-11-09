@@ -9,7 +9,7 @@ import sqlite3
 class gatedb:
 	' module to maintan state in the database, sqlite3 for now should be sufficient '
 
-	_db_sqlite3_name="db/garage.db"
+	_db_sqlite3_name="../db/garage.db"
 
 	conn = None 
 	def __init__(self):
@@ -19,6 +19,12 @@ class gatedb:
 	def get_shapes(self):
 		result = []
 		for row in self.conn.execute('SELECT * FROM known_shapes ORDER BY id'):
+			result.append(row)
+		return result
+
+	def get_events(self):
+		result = []
+		for row in self.conn.execute('SELECT * FROM security ORDER BY id'):
 			result.append(row)
 		return result
 

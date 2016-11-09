@@ -6,7 +6,7 @@ import gatekeeper
 gk=gatekeeper.GateKeeper()
 
 if ( len(sys.argv) < 2 ):
-	print "Uaage: checkgate.py <[-d] || image file || -c <img1> <img2>>" 
+	print "Usage: checkgate.py <[-d] || image file || -c <img1> <img2>>"
 	sys.exit(0)
 
 if ( sys.argv[1].lower() == "-c" ):

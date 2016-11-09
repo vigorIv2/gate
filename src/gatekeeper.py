@@ -29,7 +29,7 @@ class GateKeeper:
 		res=( a1 < (a2+df) and a1 > (a2-df) ) # a within deviation range
 		return res # a within deviation range
 		
-  # to find a given shape and area in the array loaded from databse
+	# to find a given shape and area in the array loaded from databse
 	def find_shape(self,shapes,shape,area):
 		lr=0
 		for s in shapes:
@@ -42,7 +42,7 @@ class GateKeeper:
 			lr+=1
 		return None
 
-  # compares two images and returns a number - if numer too big - imges too different
+	# compares two images and returns a number - if numer too big - imges too different
 	def similar_images(self,img1,img2):
 		too_different=250000
 #		compare -metric AE -fuzz 5% ./test/goco01.jpg ./test/goci02.jpg /dev/null
@@ -56,9 +56,7 @@ class GateKeeper:
 		cmd=['compare', '-metric', 'AE', '-fuzz', '5%', img1, img2, '/dev/null']
 		p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		out, err = p.communicate()
-#		print out, err, cmd
 		diff=int("".join(err))
-#		print diff
 		logging.info("images similar? cmd="+ " ".join(cmd)+ " result="+ str(diff))
 		return diff < too_different
 
@@ -218,9 +216,9 @@ class GateKeeper:
 		return neighbors
 
 	def current_neighbors(self):
-    # ip neigh 
-    # fe80::6203:8ff:fe91:5c56 dev eth0 lladdr 60:03:08:91:5c:56 REACHABLE
-    # fe80::76d0:2bff:fecf:1257 dev eth0 lladdr 74:d0:2b:cf:12:57 STALE
+		# ip neigh
+    	# fe80::6203:8ff:fe91:5c56 dev eth0 lladdr 60:03:08:91:5c:56 REACHABLE
+    	# fe80::76d0:2bff:fecf:1257 dev eth0 lladdr 74:d0:2b:cf:12:57 STALE
 
 		response_json = {}
 		pcmd=['ip', 'neigh']
@@ -263,11 +261,8 @@ class GateKeeper:
 			if ( (num % 7) == 0 ): 
 				neigh=self.broadcastPing6('eth0','1')
 			num += 1 
-    #  print neigh
 			neighm=self.current_neighbors()
-    #  print neighm
 			for n in neighm['neighbors']:
-    #    print "neighbor:",n
 				brand=self.lookup_brand(n['mac'].lower())
 				ln=self.lookup_neighbor(trusted_neighbors,n['mac'],2)
 				ns.append(n)
