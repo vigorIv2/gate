@@ -23,13 +23,13 @@ class GateKeeper:
 
 	DEFAULT_DEVIATION=7 # 5% deviation of area
 
-	# checks that area "a1" is within deviation "d" % fomr a2
+	# checks that area "a1" is within deviation "d" % from a2
 	def within(self,a1,a2,d=DEFAULT_DEVIATION):
 		df=(a1*d)/100 # deviation 
 		res=( a1 < (a2+df) and a1 > (a2-df) ) # a within deviation range
 		return res # a within deviation range
 		
-  # to find a given shape and area in the array loaded from databse
+	# to find a given shape and area in the array loaded from databse
 	def find_shape(self,shapes,shape,area):
 		lr=0
 		for s in shapes:
@@ -197,7 +197,7 @@ class GateKeeper:
 		return neighbors
 
 	def current_neighbors(self):
-    # ip neigh 
+		# ip neigh
     # fe80::6203:8ff:fe91:5c56 dev eth0 lladdr 60:03:08:91:5c:56 REACHABLE
     # fe80::76d0:2bff:fecf:1257 dev eth0 lladdr 74:d0:2b:cf:12:57 STALE
 
@@ -214,7 +214,6 @@ class GateKeeper:
 		macs=[]
 		for l in out.split("\n"):
 			ls=l.split(" ")
-#			print l
 			if ( l == "" or ls < 5 ):
 				break # end of ip command output, ignore rest
 			if ( mac_pattern.match(ls[4])):
@@ -232,7 +231,7 @@ class GateKeeper:
 			if ( n[cn] == keyl ):
 				return n
 		return None
-		 
+
 	def neighborhood_watch(self,trusted_neighbors):
 		num=7
 		while True:
@@ -242,11 +241,8 @@ class GateKeeper:
 			if ( (num % 7) == 0 ): 
 				neigh=self.broadcastPing6('eth0','1')
 			num += 1 
-    #  print neigh
 			neighm=self.current_neighbors()
-    #  print neighm
 			for n in neighm['neighbors']:
-    #    print "neighbor:",n
 				brand=self.lookup_brand(n['mac'].lower())
 				ln=self.lookup_neighbor(trusted_neighbors,n['mac'],2)
 				ns.append(n)
@@ -273,7 +269,6 @@ class GateKeeper:
 							self.gdb.save_neighbor_state(n['status'],lin[0])
 
 			print "-=-=-=-=-=-=-=-==-=---=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
-#			logging.debug("neighborhood "+str(ns)) 
 			for n in pn:
 				if ( not n[0] in cn ):
 					self.neighbor_away(n)
