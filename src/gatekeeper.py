@@ -41,6 +41,27 @@ class GateKeeper:
 					return lr
 			lr+=1
 		return None
+
+  # compares two images and returns a number - if numer too big - imges too different
+	def similar_images(self,img1,img2):
+		too_different=250000
+#		compare -metric AE -fuzz 5% ./test/goco01.jpg ./test/goci02.jpg /dev/null
+		image1 = cv2.imread(img1)
+		(h1, w1) = image1.shape[:2]
+		image2 = cv2.imread(img2)
+		(h2, w2) = image2.shape[:2]
+		if ( h1 != h2 or w1 != w2 ):
+			logging.info("images similar? h1="+ str(h1)+" h2="+str(h2)+" w1="+str(w1)+" w2="+str(w2))
+			return False
+		cmd=['compare', '-metric', 'AE', '-fuzz', '5%', img1, img2, '/dev/null']
+		p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		out, err = p.communicate()
+#		print out, err, cmd
+		diff=int("".join(err))
+#		print diff
+		logging.info("images similar? cmd="+ " ".join(cmd)+ " result="+ str(diff))
+		return diff < too_different
+
 		
 	def checkgate(self,image_name,visual_trace = True) :
 		if ( not os.path.isfile(image_name) ):
@@ -114,7 +135,7 @@ class GateKeeper:
 			logging.debug("tried "+trying)
 
 			logging.info("contours detected "+str(contDet)+" shapes recognized "+str(rcnt)+ " shapes expected total "+str(len(shapes)))
-			if ( contDet > len(shapes)*3 ): # it usually recognizes lots of shpaes
+			if ( contDet > len(shapes)*3 ): # it usually recognizes lots of shapes
 				new_gate_state = rcnt < (len(shapes)*0.66)
 				if ( self.gdb.gate_state() == new_gate_state ):
 					logging.info("no gate state change detected, it is still open = "+str(new_gate_state))
