@@ -327,4 +327,23 @@ class GateKeeper:
 	def daemonize(self):
 		self.neighborhood_watch(self.gdb.get_trusted_neighbors())
 
+	def dedupe(self,cur_fn):
+		logging.info("Current file "+cur_fn)
+		if (not os.path.exists(cur_fn)):
+			self.gdb.delete_file_record(cur_fn)
+			return
+		for fn in self.gdb.get_files_before(cur_fn):
+			if (not os.path.exists(fn)):
+				self.gdb.delete_file_record(fn)
+				continue
+			if ( self.similar_images(cur_fn,fn) ):
+				logging.info("Removing file "+fn+" as very similar to current file "+cur_fn)
+				os.remove(fn)
+				self.gdb.delete_file_record(fn)
+			else:
+				break
 
+
+	def dedupe_all(self):
+		for e in self.gdb.get_events():
+			self.dedupe(e[1])

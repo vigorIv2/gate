@@ -28,6 +28,16 @@ class gatedb:
 			result.append(row)
 		return result
 
+	def get_files_before(self,current_file):
+		ts=""
+		for row1 in self.conn.execute('SELECT time_stamp FROM security where filename = ?',(current_file,)):
+			ts=row1[0]
+		result = []
+		for row2 in self.conn.execute('SELECT filename FROM security where filename != ? and time_stamp <= ? order by time_stamp desc limit 30',(current_file,ts,)):
+			result.append(row2[0])
+
+		return result
+
 	def get_trusted_neighbors(self):
 		result = []
 		for row in self.conn.execute("SELECT id,ip,mac,name,datetime(ts, 'localtime') FROM trusted_neighbors ORDER BY id"):
@@ -56,6 +66,10 @@ class gatedb:
 	def save_neighbor_state(self,state,neib_id):  
 		with self.conn:
 			self.conn.execute("replace into neighborhood_state(state,neighbor_id) values (?,?)", (state,neib_id,))
+
+	def delete_file_record(self,fname):
+		with self.conn:
+			self.conn.execute("delete from security where filename=?", (fname,))
 
 	def drop_neighbor_state(self,neib_id):
 		with self.conn:
