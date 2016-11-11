@@ -44,6 +44,10 @@ class GateKeeper:
 
 	# compares two images and returns a number - if numer too big - imges too different
 	def similar_images(self,img1,img2):
+		if ( not os.path.exists(img1) ):
+			return True
+		if ( not os.path.exists(img2) ):
+			return True
 		too_different=250000
 #		compare -metric AE -fuzz 5% ./test/goco01.jpg ./test/goci02.jpg /dev/null
 		image1 = cv2.imread(img1)
@@ -327,4 +331,17 @@ class GateKeeper:
 	def daemonize(self):
 		self.neighborhood_watch(self.gdb.get_trusted_neighbors())
 
+	def dedupe(self,cur_fn):
+		logging.info("Current file "+cur_fn)
+		for fn in self.gdb.get_files_before(cur_fn):
+			if ( self.similar_images(cur_fn,fn) ):
+				logging.info("Removing file "+fn+" as very similar to current file "+cur_fn)
+				if ( os.path.exists(fn) ): os.remove(fn)
+				self.gdb.delete_file_record(fn)
+			else:
+				break
 
+
+	def dedupe_all(self):
+		for e in self.gdb.get_events():
+			self.dedupe(e[1])
