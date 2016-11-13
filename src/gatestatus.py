@@ -10,7 +10,7 @@ if ( len(sys.argv) < 2 ):
 	sys.exit(0)
 
 if ( sys.argv[1].lower() == "-c" ):
-	sim=gk.similar_images(sys.argv[2],sys.argv[3])
+	sim=gk.diff_images(sys.argv[2],sys.argv[3])
 	print "Similar:", sim
 elif ( sys.argv[1].lower() == "-e" ):
 	gk.dedupe(sys.argv[2])

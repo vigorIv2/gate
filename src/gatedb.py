@@ -33,7 +33,8 @@ class gatedb:
 		for row1 in self.conn.execute('SELECT time_stamp FROM security where filename = ?',(current_file,)):
 			ts=row1[0]
 		result = []
-		for row2 in self.conn.execute('SELECT filename FROM security where filename != ? and time_stamp <= ? order by time_stamp desc limit 30',(current_file,ts,)):
+
+		for row2 in self.conn.execute('SELECT filename FROM security where filename != ? and time_stamp <= ? and time_stamp >= datetime(?,"-5 minutes") order by time_stamp desc',(current_file,ts,ts,)):
 			result.append(row2[0])
 
 		return result

@@ -60,7 +60,28 @@ class GateKeeper:
 		logging.info("images similar? cmd="+ " ".join(cmd)+ " result="+ str(diff))
 		return diff < too_different
 
-		
+	# compares two images and returns a number - if numer too big - imges too different
+	def diff_images(self, img1, img2):
+		too_different = 0.05
+		# compare - verbose - metric MAE 15.jpg 00.jpg null:
+		image1 = cv2.imread(img1)
+		(h1, w1) = image1.shape[:2]
+		image2 = cv2.imread(img2)
+		(h2, w2) = image2.shape[:2]
+		if (h1 != h2 or w1 != w2):
+			logging.info("images different? h1=" + str(h1) + " h2=" + str(h2) + " w1=" + str(w1) + " w2=" + str(w2))
+			return False
+		cmd = ['compare', '-verbose', '-metric', 'MAE', img1, img2, 'null:']
+		p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		out, err = p.communicate()
+		diff=0
+		for ln in err.split("\n"):
+			if ( "all:" in ln ):
+				diff=float(ln.lstrip().split(" ")[2].lstrip("(").rstrip(")"))
+		logging.info("images different? cmd=" + " ".join(cmd) + " result=" + str(diff))
+		return diff < too_different
+
+
 	def checkgate(self,image_name,visual_trace = True) :
 		if ( not os.path.isfile(image_name) ):
 			logging.warn("image file not found "+image_name)
@@ -336,7 +357,7 @@ class GateKeeper:
 			if (not os.path.exists(fn)):
 				self.gdb.delete_file_record(fn)
 				continue
-			if ( self.similar_images(cur_fn,fn) ):
+			if ( self.diff_images(cur_fn,fn) ):
 				logging.info("Removing file "+fn+" as very similar to current file "+cur_fn)
 				os.remove(fn)
 				self.gdb.delete_file_record(fn)
