@@ -9,7 +9,7 @@ import sqlite3
 class gatedb:
 	' module to maintan state in the database, sqlite3 for now should be sufficient '
 
-	_db_sqlite3_name="../db/garage.db"
+	_db_sqlite3_name="/opt/data/sqlite3/garage.db"
 
 	conn = None 
 	def __init__(self):

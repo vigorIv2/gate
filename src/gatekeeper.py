@@ -6,7 +6,8 @@ import logging
 import json
 import time
 import sys
-import Image
+#import Image
+from PIL import Image
 import subprocess
 import imutils
 import cv2
@@ -156,7 +157,7 @@ class GateKeeper:
 
 				# show the output image
 				if ( visual_trace ):
-					cv2.imshow("Image", image)
+					cv2.imshow("image", image)
 					cv2.waitKey(0)
 			logging.debug("tried "+trying)
 
