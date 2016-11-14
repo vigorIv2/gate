@@ -40,7 +40,7 @@ CREATE TABLE if not exists regions(
 );
 
 delete from regions;
-insert into regions(name,left,upper,right,lower) values('ford silver', 0, 280, 320, 640);
+insert into regions(name,left,upper,right,lower) values('car', 0, 280, 320, 640);
 insert into regions(name,left,upper,right,lower) values('gate', 305, 0, 417, 640);
 select * from regions;
 
@@ -116,3 +116,14 @@ insert into known_shapes(name,area) values('triangle', 64);
 insert into known_shapes(name,area) values('rectangle', 147.67);
 select * from known_shapes;
 
+
+DROP TABLE if exists shapes_regions;
+
+CREATE TABLE if not exists shapes_regions(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name varchar(40),
+  area float,
+  region_id INTEGER,
+	FOREIGN KEY(region_id) REFERENCES regions(id)
+);
+CREATE UNIQUE INDEX shape_region_idx on shapes_regions (name,area,region_id);

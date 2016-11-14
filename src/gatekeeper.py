@@ -6,6 +6,7 @@ import logging
 import json
 import time
 import sys
+import Image
 import subprocess
 import imutils
 import cv2
@@ -21,7 +22,7 @@ class GateKeeper:
 		self.gdb=gatedb.gatedb()
 		logging.basicConfig(filename='/var/log/motion/gatekeeper.log',format='%(asctime)s %(levelname)s %(message)s',level=logging.DEBUG)
 
-	DEFAULT_DEVIATION=7 # 5% deviation of area
+	DEFAULT_DEVIATION = 7 # 5% deviation of area
 
 	# checks that area "a1" is within deviation "d" % from a2
 	def within(self,a1,a2,d=DEFAULT_DEVIATION):
@@ -81,6 +82,12 @@ class GateKeeper:
 		logging.info("images different? cmd=" + " ".join(cmd) + " result=" + str(diff))
 		return diff < too_different
 
+	def is_acceptable_area(self,A):
+		if ( A == None ):
+			return False
+		MIN_A = 7
+		MAX_A = 1500
+		return (A >= MIN_A and A <= MAX_A)
 
 	def checkgate(self,image_name,visual_trace = True) :
 		if ( not os.path.isfile(image_name) ):
@@ -164,6 +171,113 @@ class GateKeeper:
 				logging.debug("Too little contours detected, it is likely because too dark due to gate is closed or night")  
 		except Exception, err:
 			logging.exception('Error from throws():')
+
+	def crop_image(self,srcimg,destimg,left,upper,width,lower):
+		i = Image.open(srcimg)
+		w = i.size[0]
+		h = i.size[1]
+
+		frame2 = i.crop(((left, upper, width, lower)))
+		frame2.save(destimg)
+
+	def reg_file_name(self,fn, id):
+		return fn.split(".")[0]+"_"+str(id)+".jpg"
+
+	def snapshot_regions(self,imgn):
+		for reg in self.gdb.get_reqions():
+			rfn=self.reg_file_name(imgn,reg[0])
+			self.crop_image(imgn,rfn,reg[2],reg[3],reg[4],reg[5])
+			self.gdb.delete_shapes_regions(reg[0])
+			self.save_shapes(rfn,reg[0])
+			os.remove(rfn)
+
+	def check_shapes_region(self,imgn,regname):
+		reg=self.gdb.get_region(regname)
+		rfn=self.reg_file_name(imgn,reg[0])
+		self.crop_image(imgn,rfn,reg[1],reg[2],reg[3],reg[4])
+		shapes=self.gdb.load_shapes(reg[0])
+
+		res= self.shapes_exist(rfn,shapes)
+		logging.info("image="+imgn+" region="+regname+" res="+str(res))
+		os.remove(rfn)
+		return res
+
+	def shapes_exist(self, image_name, shapes_to_find):
+		shapes=self.only_acceptable_contours(self.get_contours(image_name))
+		fcnt=1
+		for s in shapes:
+			if ( self.find_shape(shapes_to_find, s[1],s[2])):
+				fcnt += 1
+		logging.info("fcnt="+str(fcnt)+" len(shapes)="+str(len(shapes)))
+		return self.within(len(shapes),fcnt)
+
+	def get_contours(self, image):
+		if (not os.path.isfile(image)):
+			logging.warn("image file not found " + image)
+			return
+		sz = os.path.getsize(image)
+		if (sz == 0L):
+			logging.warn("image file empty, ignoring " + image)
+			return
+		logging.info("detect_shapes image_name=" + image)
+		try:
+			# load the image and resize it to a smaller factor so that
+			# the shapes can be approximated better
+
+			image = cv2.imread(image)
+			resized = imutils.resize(image, width=300)
+			ratio = image.shape[0] / float(resized.shape[0])
+
+			# convert the resized image to grayscale, blur it slightly,
+			# and threshold it
+			gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+			blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+			# thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY)[1]
+			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+
+			# find contours in the thresholded image and initialize the
+			# shape detector
+			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+			return cnts
+
+		except Exception, err:
+			logging.exception('Error from throws() in detect_shapes:')
+			return None
+
+	def only_acceptable_contours(self,cnts):
+		shapes = []
+		snum=0
+		seen = {}
+		for c in cnts:
+			# compute the center of the contour, then detect the name of the
+			# shape using only the contour
+			M = cv2.moments(c)
+			shape = self.detect(c)
+			A = M["m00"]  # Area
+
+			if (not self.is_acceptable_area(A)):
+				continue
+			if ( shape == u'square' ):
+				shape = u'rectangle' # treat square as rectangles
+			skey=shape+"-"+str(A)
+			if ( not skey in seen.keys() ):
+#				logging.debug("recognized shape=" + shape + " area=" + str(A) )
+				shape=(snum,shape,A)
+				snum += 1
+				shapes.append(shape)
+				seen[skey]=1
+		res= sorted(shapes, key=lambda x: x[1]+"{0:020.2f}".format(round(x[2],2)))
+		return res
+
+	def save_shapes(self, image_name, id):
+		try:
+			shapes=self.only_acceptable_contours(self.get_contours(image_name))
+			for s in shapes:
+				self.gdb.save_shapes_regions(s[1],s[2],id)
+
+		except Exception, err:
+			logging.exception('Error from throws() in save_shapes:'+err)
 
 	def gate_state_changed(self,new_state):
 		logging.info("gate state changed, it is now open = "+str(new_state))

@@ -28,6 +28,13 @@ class gatedb:
 			result.append(row)
 		return result
 
+	def get_reqions(self):
+		result = []
+		for row in self.conn.execute('SELECT id, name, left, upper, right, lower FROM regions'):
+			result.append(row)
+		return result
+
+
 	def get_files_before(self,current_file):
 		ts=""
 		for row1 in self.conn.execute('SELECT time_stamp FROM security where filename = ?',(current_file,)):
@@ -49,7 +56,12 @@ class gatedb:
 		for row in self.conn.execute('select open from gate_state order by ts desc limit 1;'):
 			return row[0] == 1
 		return None
-	
+
+	def get_region(self,regname):
+		for row in self.conn.execute('select id, left, upper, right, lower from regions where name = ? ',(regname,)):
+			return row
+		return None
+
 	def oui_vendor(self,oui):
 		for row in self.conn.execute('select vendor from oui_vendor where oui=?;',(oui,)):
 			return row[0]
@@ -67,6 +79,20 @@ class gatedb:
 	def save_neighbor_state(self,state,neib_id):  
 		with self.conn:
 			self.conn.execute("replace into neighborhood_state(state,neighbor_id) values (?,?)", (state,neib_id,))
+
+	def save_shapes_regions(self,name,area,region_id):
+		with self.conn:
+			self.conn.execute("insert into shapes_regions(name,area,region_id) values (?,?,?)", (name,area,region_id,))
+
+	def load_shapes(self,regid):
+		result = []
+		for row in self.conn.execute('select id, name, area from shapes_regions where region_id = ? ',(regid,)):
+			result.append(row)
+		return result
+
+	def delete_shapes_regions(self,region_id):
+		with self.conn:
+			self.conn.execute("delete from shapes_regions where region_id = ?", (region_id,))
 
 	def delete_file_record(self,fname):
 		with self.conn:
