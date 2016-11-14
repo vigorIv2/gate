@@ -25,6 +25,7 @@ elif (sys.argv[1].lower() == "-dedupe_all"):
 elif (sys.argv[1].lower() == "-check"):
 	print "gate=" + str(gk.check_shapes_region(sys.argv[2], "gate"))
 	print "car=" + str(gk.check_shapes_region(sys.argv[2], "car"))
+	gk.dedupe(sys.argv[2])
 else:
 	print "Unknown arguments "+sys.argv
 
