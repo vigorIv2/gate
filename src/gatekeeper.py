@@ -206,10 +206,10 @@ class GateKeeper:
 	def shapes_exist(self, image_name, shapes_to_find):
 		shapes=self.only_acceptable_contours(self.get_contours(image_name))
 		fcnt=1
-		for s in shapes:
-			if ( self.find_shape(shapes_to_find, s[1],s[2])):
+		for s in shapes_to_find:
+			if ( self.find_shape(shapes, s[1],s[2])):
 				fcnt += 1
-		logging.info("fcnt="+str(fcnt)+" len(shapes)="+str(len(shapes)))
+		logging.info("fcnt="+str(fcnt)+" len(shapes_to_find)="+str(len(shapes_to_find)))
 		return self.within(len(shapes),fcnt)
 
 	def get_contours(self, image):
