@@ -87,8 +87,8 @@ class GateKeeper:
 	def is_acceptable_area(self,A):
 		if ( A == None ):
 			return False
-		MIN_A = 25
-		MAX_A = 500
+		MIN_A = 23
+		MAX_A = 500000
 		return (A >= MIN_A and A <= MAX_A)
 
 	def checkgate(self,image_name,visual_trace = True) :
@@ -253,8 +253,8 @@ class GateKeeper:
 
 # the best for both			 thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV)[1]
 
-			thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV+cv2.THRESH_TOZERO)[1]
-# the absolute best for both			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.CALIB_CB_ADAPTIVE_THRESH, cv2.THRESH_BINARY_INV, 11, 2)
+# the very good choice	 for both, likely best		thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV+cv2.THRESH_TOZERO)[1]
+			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.CALIB_CB_ADAPTIVE_THRESH, cv2.THRESH_BINARY_INV, 11, 2)
 
 # one of the best			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_SKIN_DETECTOR_MORPHING_METHOD_ERODE, cv2.THRESH_BINARY_INV, 11, 2)
 # very first best			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
