@@ -1,6 +1,7 @@
 import cv2
 import sys
-import Image
+#import Image
+from PIL import Image
 
 image_name=sys.argv[1]
 i = Image.open(image_name)
@@ -8,7 +9,9 @@ w= i.size[0]
 h= i.size[1]
 
 #left=0; upper=(h/8)*3+40; width=(w/8)*6-40; lower=h # ford silver
-left=(w/8)*6-55; upper=0; width=w-63; lower=h # gate shapes
+left=(w/8)*6-55; upper=70; width=w-63; lower=h-290 # gate shapes
+left=0; upper=280; width=310; lower=640 # gate shapes
+
 
 print (left, upper, width, lower)
 frame2 = i.crop(((left, upper, width, lower)))

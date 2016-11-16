@@ -40,8 +40,8 @@ CREATE TABLE if not exists regions(
 );
 
 delete from regions;
-insert into regions(name,left,upper,right,lower) values('car', 0, 280, 320, 640);
-insert into regions(name,left,upper,right,lower) values('gate', 305, 0, 417, 640);
+insert into regions(name,left,upper,right,lower) values('car', 0, 280, 310, 640);
+insert into regions(name,left,upper,right,lower) values('gate', 305, 70, 417, 350);
 select * from regions;
 
 

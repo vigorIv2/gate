@@ -33,6 +33,7 @@ class GateKeeper:
 		
 	# to find a given shape and area in the array loaded from databse
 	def find_shape(self,shapes,shape,area):
+		logging.info("find shape "+shape+" area="+str(area))
 		lr=0
 		for s in shapes:
 			rshape = s[1]
@@ -86,8 +87,8 @@ class GateKeeper:
 	def is_acceptable_area(self,A):
 		if ( A == None ):
 			return False
-		MIN_A = 7
-		MAX_A = 1500
+		MIN_A = 27
+		MAX_A = 500
 		return (A >= MIN_A and A <= MAX_A)
 
 	def checkgate(self,image_name,visual_trace = True) :
@@ -200,15 +201,23 @@ class GateKeeper:
 
 		res= self.shapes_exist(rfn,shapes)
 		logging.info("image="+imgn+" region="+regname+" res="+str(res))
-		os.remove(rfn)
+#		os.remove(rfn)
 		return res
 
 	def shapes_exist(self, image_name, shapes_to_find):
 		shapes=self.only_acceptable_contours(self.get_contours(image_name))
-		fcnt=1
+		fcnt=0
 		for s in shapes_to_find:
-			if ( self.find_shape(shapes, s[1],s[2])):
+			if ( self.find_shape(shapes, s[1],s[2]) != None ):
 				fcnt += 1
+				logging.debug("shape found " + str(s))
+			else:
+				logging.debug("shape NOT found " + str(s))
+
+		if ( len(shapes) != fcnt ):
+			logging.debug("shapes_to_find=" + str(shapes_to_find))
+			logging.debug("shapes=" + str(shapes))
+
 		logging.info("fcnt="+str(fcnt)+" len(shapes_to_find)="+str(len(shapes_to_find)))
 		return self.within(len(shapes),fcnt)
 
@@ -225,13 +234,13 @@ class GateKeeper:
 			# load the image and resize it to a smaller factor so that
 			# the shapes can be approximated better
 
-			image = cv2.imread(image)
-			resized = imutils.resize(image, width=300)
-			ratio = image.shape[0] / float(resized.shape[0])
+			img = cv2.imread(image)
+#			resized = imutils.resize(image, width=300)
+#			ratio = image.shape[0] / float(resized.shape[0])
 
 			# convert the resized image to grayscale, blur it slightly,
 			# and threshold it
-			gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 			blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 			# thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY)[1]
 			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
