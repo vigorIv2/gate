@@ -87,7 +87,7 @@ class GateKeeper:
 	def is_acceptable_area(self,A):
 		if ( A == None ):
 			return False
-		MIN_A = 27
+		MIN_A = 25
 		MAX_A = 500
 		return (A >= MIN_A and A <= MAX_A)
 
@@ -204,8 +204,12 @@ class GateKeeper:
 #		os.remove(rfn)
 		return res
 
-	def shapes_exist(self, image_name, shapes_to_find):
-		shapes=self.only_acceptable_contours(self.get_contours(image_name))
+	def shapes_exist(self, image_name, shapes_to_find, visual=True):
+		cnts=self.get_contours(image_name)
+		if (visual):
+			self.view_countours(cnts, image_name)
+
+		shapes=self.only_acceptable_contours(cnts)
 		fcnt=0
 		for s in shapes_to_find:
 			if ( self.find_shape(shapes, s[1],s[2]) != None ):
@@ -219,9 +223,9 @@ class GateKeeper:
 			logging.debug("shapes=" + str(shapes))
 
 		logging.info("fcnt="+str(fcnt)+" len(shapes_to_find)="+str(len(shapes_to_find)))
-		return self.within(len(shapes),fcnt)
+		return self.within(len(shapes),fcnt,40)
 
-	def get_contours(self, image):
+	def get_contours(self, image, visual_trace=True):
 		if (not os.path.isfile(image)):
 			logging.warn("image file not found " + image)
 			return
@@ -242,21 +246,63 @@ class GateKeeper:
 			# and threshold it
 			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 			blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-			# thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY)[1]
-			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+
+# decent for car nd even door			thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_OTSU)[1]
+
+# decent for car			thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_TOZERO)[1]
+
+# the best for both			 thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV)[1]
+
+			thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV+cv2.THRESH_TOZERO)[1]
+# the absolute best for both			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.CALIB_CB_ADAPTIVE_THRESH, cv2.THRESH_BINARY_INV, 11, 2)
+
+# one of the best			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_SKIN_DETECTOR_MORPHING_METHOD_ERODE, cv2.THRESH_BINARY_INV, 11, 2)
+# very first best			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
 
 			# find contours in the thresholded image and initialize the
 			# shape detector
 			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+
 			return cnts
 
 		except Exception, err:
 			logging.exception('Error from throws() in detect_shapes:')
 			return None
 
+	def view_countours(self,cnts,img_nme):
+		if ( cnts == None ):
+			return
+		ratio=1
+		img = cv2.imread(img_nme)
+		for c in cnts:
+			# compute the center of the contour, then detect the name of the
+			# shape using only the contour
+			M = cv2.moments(c)
+			shape = self.detect(c)
+			A = M["m00"]  # Area
+			if ( not self.is_acceptable_area(A)):
+				continue
+			logging.info("in file" + img_nme + " recognized shape=" + shape + " area=" + str(A) )
+			cX = int((M["m10"] / M["m00"]) * ratio)
+			cY = int((M["m01"] / M["m00"]) * ratio)
+
+			# multiply the contour (x, y)-coordinates by the resize ratio,
+			# then draw the contours and the name of the shape on the image
+			c = c.astype("float")
+			c *= ratio
+			c = c.astype("int")
+			cv2.drawContours(img, [c], -1, (0, 255, 0), 2)
+			cv2.putText(img, shape, (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+			# show the output image
+			cv2.imshow("image", img)
+			cv2.waitKey(0)
+
 	def only_acceptable_contours(self,cnts):
 		shapes = []
+		if ( cnts == None ):
+			return shapes
 		snum=0
 		seen = {}
 		for c in cnts:
@@ -280,9 +326,12 @@ class GateKeeper:
 		res= sorted(shapes, key=lambda x: x[1]+"{0:020.2f}".format(round(x[2],2)))
 		return res
 
-	def save_shapes(self, image_name, id):
+	def save_shapes(self, image_name, id, visual=True):
 		try:
-			shapes=self.only_acceptable_contours(self.get_contours(image_name))
+			cnts=self.get_contours(image_name)
+			if ( visual ):
+				self.view_countours(cnts,image_name)
+			shapes=self.only_acceptable_contours(cnts)
 			for s in shapes:
 				self.gdb.save_shapes_regions(s[1],s[2],id)
 
