@@ -80,13 +80,13 @@ class gatedb:
 		with self.conn:
 			self.conn.execute("replace into neighborhood_state(state,neighbor_id) values (?,?)", (state,neib_id,))
 
-	def save_shapes_regions(self,name,area,region_id):
+	def save_shapes_region(self,shape,area,vertices,region_id):
 		with self.conn:
-			self.conn.execute("insert into shapes_regions(name,area,region_id) values (?,?,?)", (name,area,region_id,))
+			self.conn.execute("insert into shapes_regions(shape,area,vertices,region_id) values (?,?,?,?)", (shape,area,vertices,region_id,))
 
 	def load_shapes(self,regid):
 		result = []
-		for row in self.conn.execute('select id, name, area from shapes_regions where region_id = ? ',(regid,)):
+		for row in self.conn.execute('select id, shape, area, vertices from shapes_regions where region_id = ? ',(regid,)):
 			result.append(row)
 		return result
 

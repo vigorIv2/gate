@@ -37,8 +37,6 @@ class GateKeeper:
 		lr=0
 		for s in shapes:
 			rshape = s[1]
-			if ( rshape == u'square' ):
-				rshape = u'rectangle' # treat square as rectangles
 			if ( rshape == shape ):
 				if ( self.within(s[2],area) ):
 					return lr
@@ -131,7 +129,7 @@ class GateKeeper:
 				# compute the center of the contour, then detect the name of the
 				# shape using only the contour
 				M = cv2.moments(c)
-				shape = self.detect(c)
+				(shape,vertices) = self.detect(c)
 				A = M["m00"] # Area
 				L = self.find_shape(shapes,shape,A)
 				if ( A > 10) :
@@ -225,6 +223,25 @@ class GateKeeper:
 		logging.info("fcnt="+str(fcnt)+" len(shapes_to_find)="+str(len(shapes_to_find)))
 		return self.within(len(shapes),fcnt,40)
 
+	def reveal_countours(selfself,img,algo):
+		img = cv2.imread(image)
+		if ( algo == 1 ):
+			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+			blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.CALIB_CB_ADAPTIVE_THRESH, cv2.THRESH_BINARY_INV, 11, 2)
+			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+			return cnts
+		elif ( algo == 2 ):
+			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+			blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+			thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV)[1]
+			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+			return cnts
+		else:
+			return None
+
 	def get_contours(self, image, visual_trace=True):
 		if (not os.path.isfile(image)):
 			logging.warn("image file not found " + image)
@@ -279,7 +296,7 @@ class GateKeeper:
 			# compute the center of the contour, then detect the name of the
 			# shape using only the contour
 			M = cv2.moments(c)
-			shape = self.detect(c)
+			(shape, vertices) = self.detect(c)
 			A = M["m00"]  # Area
 			if ( not self.is_acceptable_area(A)):
 				continue
@@ -309,17 +326,15 @@ class GateKeeper:
 			# compute the center of the contour, then detect the name of the
 			# shape using only the contour
 			M = cv2.moments(c)
-			shape = self.detect(c)
+			(shape, vertices) = self.detect(c)
 			A = M["m00"]  # Area
 
 			if (not self.is_acceptable_area(A)):
 				continue
-			if ( shape == u'square' ):
-				shape = u'rectangle' # treat square as rectangles
 			skey=shape+"-"+str(A)
 			if ( not skey in seen.keys() ):
 #				logging.debug("recognized shape=" + shape + " area=" + str(A) )
-				shape=(snum,shape,A)
+				shape=(snum,shape,A,vertices)
 				snum += 1
 				shapes.append(shape)
 				seen[skey]=1
@@ -333,10 +348,10 @@ class GateKeeper:
 				self.view_countours(cnts,image_name)
 			shapes=self.only_acceptable_contours(cnts)
 			for s in shapes:
-				self.gdb.save_shapes_regions(s[1],s[2],id)
+				self.gdb.save_shapes_region(s[1],s[2],s[3],id)
 
 		except Exception, err:
-			logging.exception('Error from throws() in save_shapes:'+err)
+			logging.exception('Error from throws() in save_shapes:'+str(err))
 
 	def gate_state_changed(self,new_state):
 		logging.info("gate state changed, it is now open = "+str(new_state))
@@ -351,7 +366,6 @@ class GateKeeper:
 		# if the shape is a triangle, it will have 3 vertices
 		if len(approx) == 3:
 			shape = "triangle"
-
 		# if the shape has 4 vertices, it is either a square or
 		# a rectangle
 		elif len(approx) == 4:
@@ -359,21 +373,28 @@ class GateKeeper:
 			# bounding box to compute the aspect ratio
 			(x, y, w, h) = cv2.boundingRect(approx)
 			ar = w / float(h)
-
 			# a square will have an aspect ratio that is approximately
 			# equal to one, otherwise, the shape is a rectangle
 			shape = "square" if ar >= 0.95 and ar <= 1.05 else "rectangle"
-
 		# if the shape is a pentagon, it will have 5 vertices
 		elif len(approx) == 5:
 			shape = "pentagon"
-
+		elif len(approx) == 6:
+			shape = "hexagon"
+		elif len(approx) == 7:
+			shape = "heptagon"
+		elif len(approx) == 8:
+			shape = "octagon"
+		elif len(approx) == 9:
+			shape = "enneagon"
+		elif len(approx) == 10:
+			shape = "decagon"
 		# otherwise, we assume the shape is a circle
 		else:
 			shape = "circle"
 
 		# return the name of the shape
-		return shape
+		return (shape,len(approx))
 
 	def ping6(self, interface, addr):
 		# ping6 -c 1 -I eth0 -w 1 ff02::1

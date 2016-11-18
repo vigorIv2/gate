@@ -35,7 +35,8 @@ CREATE TABLE if not exists regions(
   left int, 
 	upper int, 
 	right int, 
-	lower int,	
+	lower int,
+	algorithm int,
   ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
@@ -103,7 +104,7 @@ CREATE TABLE if not exists known_shapes(
 
 truncate known_shapes;
 insert into known_shapes(name,area) values('pentagon', 105);
-insert into known_shapes(name,area) values('triangle', 42.67);
+
 
 insert into known_shapes(name,area) values('rectangle', 109.67);
 insert into known_shapes(name,area) values('triangle', 83.17);
@@ -121,9 +122,10 @@ DROP TABLE if exists shapes_regions;
 
 CREATE TABLE if not exists shapes_regions(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name varchar(40),
+  shape varchar(40),
+  vertices int,
   area float,
   region_id INTEGER,
 	FOREIGN KEY(region_id) REFERENCES regions(id)
 );
-CREATE UNIQUE INDEX shape_region_idx on shapes_regions (name,area,region_id);
+CREATE UNIQUE INDEX shape_region_idx on shapes_regions (shape,vertices,area,region_id);
