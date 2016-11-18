@@ -1,26 +1,25 @@
 import cv2
 import sys
-#import Image
-from PIL import Image
 
-image_name=sys.argv[1]
-i = Image.open(image_name)
-w= i.size[0]
-h= i.size[1]
+# load the image and show it
+image = cv2.imread(sys.argv[1])
 
-#left=0; upper=(h/8)*3+40; width=(w/8)*6-40; lower=h # ford silver
-left=(w/8)*6-55; upper=70; width=w-63; lower=h-290 # gate shapes
-left=0; upper=280; width=310; lower=640 # gate shapes
+startY=280; endY=640; startX=0; endX=310 # gate shapes
 
-
-print (left, upper, width, lower)
-frame2 = i.crop(((left, upper, width, lower)))
-timage='tmp/dt110507dhct_frame2.jpg'
-frame2.save(timage)
-print "prior to imread"
-
-image = cv2.imread(timage)
-
-cv2.imshow("Image", image)
+print (startY, endY, startX, endX)
+# startY and endY coordinates, followed by the startX and endX 
+cropped = image[startY:endY, startX:endX]
+cv2.imshow("cropped", cropped)
 cv2.waitKey(0)
+
+
+#frame2 = i.crop(((left, upper, width, lower)))
+#timage='tmp/dt110507dhct_frame2.jpg'
+#frame2.save(timage)
+#print "prior to imread"
+
+#image = cv2.imread(timage)
+
+#cv2.imshow("Image", image)
+#cv2.waitKey(0)
 

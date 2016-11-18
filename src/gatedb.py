@@ -30,7 +30,7 @@ class gatedb:
 
 	def get_reqions(self):
 		result = []
-		for row in self.conn.execute('SELECT id, name, left, upper, right, lower FROM regions'):
+		for row in self.conn.execute('SELECT id, name, left, upper, right, lower, algorithm FROM regions'):
 			result.append(row)
 		return result
 
@@ -58,7 +58,7 @@ class gatedb:
 		return None
 
 	def get_region(self,regname):
-		for row in self.conn.execute('select id, left, upper, right, lower from regions where name = ? ',(regname,)):
+		for row in self.conn.execute('select id, name, left, upper, right, lower, algorithm from regions where name = ? ',(regname,)):
 			return row
 		return None
 
@@ -80,19 +80,19 @@ class gatedb:
 		with self.conn:
 			self.conn.execute("replace into neighborhood_state(state,neighbor_id) values (?,?)", (state,neib_id,))
 
-	def save_shapes_region(self,shape,area,vertices,region_id):
+	def save_feature(self,shape,area,vertices,region_id):
 		with self.conn:
-			self.conn.execute("insert into shapes_regions(shape,area,vertices,region_id) values (?,?,?,?)", (shape,area,vertices,region_id,))
+			self.conn.execute("insert into feature(shape,area,vertices,region_id) values (?,?,?,?)", (shape,area,vertices,region_id,))
 
-	def load_shapes(self,regid):
+	def load_features(self,regid):
 		result = []
-		for row in self.conn.execute('select id, shape, area, vertices from shapes_regions where region_id = ? ',(regid,)):
+		for row in self.conn.execute('select id, shape, area, vertices from feature where region_id = ? ',(regid,)):
 			result.append(row)
 		return result
 
-	def delete_shapes_regions(self,region_id):
+	def delete_features(self,region_id):
 		with self.conn:
-			self.conn.execute("delete from shapes_regions where region_id = ?", (region_id,))
+			self.conn.execute("delete from feature where region_id = ?", (region_id,))
 
 	def delete_file_record(self,fname):
 		with self.conn:

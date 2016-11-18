@@ -5,9 +5,6 @@ import os
 import logging
 import json
 import time
-import sys
-#import Image
-from PIL import Image
 import subprocess
 import imutils
 import cv2
@@ -85,129 +82,34 @@ class GateKeeper:
 	def is_acceptable_area(self,A):
 		if ( A == None ):
 			return False
-		MIN_A = 23
+		MIN_A = 17
 		MAX_A = 500000
 		return (A >= MIN_A and A <= MAX_A)
 
-	def checkgate(self,image_name,visual_trace = True) :
-		if ( not os.path.isfile(image_name) ):
-			logging.warn("image file not found "+image_name)
-			return
-		sz = os.path.getsize(image_name)
-		if ( sz == 0L ):
-			logging.warn("image file empty, ignoring "+image_name)
-			return
+	def find_best_algorithm(self,imgn,reg):
+		return 1
 
-		logging.info("processing image_name="+image_name)
-		try:
-			shapes=self.gdb.get_shapes()
-			# load the image and resize it to a smaller factor so that
-			# the shapes can be approximated better
-
-			image = cv2.imread(image_name)
-			resized = imutils.resize(image, width=300)
-			ratio = image.shape[0] / float(resized.shape[0])
-
-			# convert the resized image to grayscale, blur it slightly,
-			# and threshold it
-			gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
-			blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-			#thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY)[1]
-			thresh = cv2.adaptiveThreshold(blurred,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,11,2)
-
-			# find contours in the thresholded image and initialize the
-			# shape detector
-			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
-	
-			ML = -1	
-			rcnt = 0
-			contDet = 0 # number of countours detected
-			trying = ""	
-			# loop over the contours
-			for c in cnts:
-				# compute the center of the contour, then detect the name of the
-				# shape using only the contour
-				M = cv2.moments(c)
-				(shape,vertices) = self.detect(c)
-				A = M["m00"] # Area
-				L = self.find_shape(shapes,shape,A)
-				if ( A > 10) :
-					contDet += 1
-					trying += "s="+shape+ " a="+ str(A)+"; "
-				if ( L == None ):
-					continue
-				if ( L < ML ):
-					continue
-				ML = L
-				rcnt += 1
-				logging.info("in file "+image_name+ " recognized shape="+ shape+ " area="+ str(A)+ " level="+ str(L))
-
-				cX = int((M["m10"] / M["m00"]) * ratio)
-				cY = int((M["m01"] / M["m00"]) * ratio)
-
-				# multiply the contour (x, y)-coordinates by the resize ratio,
-				# then draw the contours and the name of the shape on the image
-				c = c.astype("float")
-				c *= ratio
-				c = c.astype("int")
-				cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
-				cv2.putText(image, shape, (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-
-				# show the output image
-				if ( visual_trace ):
-					cv2.imshow("image", image)
-					cv2.waitKey(0)
-			logging.debug("tried "+trying)
-
-			logging.info("contours detected "+str(contDet)+" shapes recognized "+str(rcnt)+ " shapes expected total "+str(len(shapes)))
-			if ( contDet > len(shapes)*3 ): # it usually recognizes lots of shapes
-				new_gate_state = rcnt < (len(shapes)*0.66)
-				if ( self.gdb.gate_state() == new_gate_state ):
-					logging.info("no gate state change detected, it is still open = "+str(new_gate_state))
-				else:
-					self.gate_state_changed(new_gate_state)
-			else:
-				logging.debug("Too little contours detected, it is likely because too dark due to gate is closed or night")  
-		except Exception, err:
-			logging.exception('Error from throws():')
-
-	def crop_image(self,srcimg,destimg,left,upper,width,lower):
-		i = Image.open(srcimg)
-		w = i.size[0]
-		h = i.size[1]
-
-		frame2 = i.crop(((left, upper, width, lower)))
-		frame2.save(destimg)
-
-	def reg_file_name(self,fn, id):
-		return fn.split(".")[0]+"_"+str(id)+".jpg"
-
-	def snapshot_regions(self,imgn):
+	def snapshot_regions(self,imgn,visual):
 		for reg in self.gdb.get_reqions():
-			rfn=self.reg_file_name(imgn,reg[0])
-			self.crop_image(imgn,rfn,reg[2],reg[3],reg[4],reg[5])
-			self.gdb.delete_shapes_regions(reg[0])
-			self.save_shapes(rfn,reg[0])
-			os.remove(rfn)
+			algo=self.find_best_algorithm(imgn,reg)
+			self.gdb.delete_features(reg[0])
+			self.save_features(imgn,reg,visual)
 
-	def check_shapes_region(self,imgn,regname):
+	def check_features(self,imgn,regname,visual):
 		reg=self.gdb.get_region(regname)
-		rfn=self.reg_file_name(imgn,reg[0])
-		self.crop_image(imgn,rfn,reg[1],reg[2],reg[3],reg[4])
-		shapes=self.gdb.load_shapes(reg[0])
+		shapes=self.gdb.load_features(reg[0])
 
-		res= self.shapes_exist(rfn,shapes)
+		res= self.shapes_exist(imgn,reg,shapes,visual)
 		logging.info("image="+imgn+" region="+regname+" res="+str(res))
 #		os.remove(rfn)
 		return res
 
-	def shapes_exist(self, image_name, shapes_to_find, visual=True):
-		cnts=self.get_contours(image_name)
+	def shapes_exist(self, image_name, reg, shapes_to_find, visual):
+		cnts=self.get_contours(image_name, reg)
 		if (visual):
-			self.view_countours(cnts, image_name)
+			self.view_countours(cnts, image_name,reg)
 
-		shapes=self.only_acceptable_contours(cnts)
+		shapes=self.get_features(cnts)
 		fcnt=0
 		for s in shapes_to_find:
 			if ( self.find_shape(shapes, s[1],s[2]) != None ):
@@ -223,8 +125,9 @@ class GateKeeper:
 		logging.info("fcnt="+str(fcnt)+" len(shapes_to_find)="+str(len(shapes_to_find)))
 		return self.within(len(shapes),fcnt,40)
 
-	def reveal_countours(selfself,img,algo):
-		img = cv2.imread(image)
+	def reveal_features(self,img,reg):
+		algo=reg[6]
+		img = self.read_region(img,reg)
 		if ( algo == 1 ):
 			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 			blurred = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -242,7 +145,7 @@ class GateKeeper:
 		else:
 			return None
 
-	def get_contours(self, image, visual_trace=True):
+	def get_contours(self, image, reg):
 		if (not os.path.isfile(image)):
 			logging.warn("image file not found " + image)
 			return
@@ -252,51 +155,28 @@ class GateKeeper:
 			return
 		logging.info("detect_shapes image_name=" + image)
 		try:
-			# load the image and resize it to a smaller factor so that
-			# the shapes can be approximated better
-
-			img = cv2.imread(image)
-#			resized = imutils.resize(image, width=300)
-#			ratio = image.shape[0] / float(resized.shape[0])
-
-			# convert the resized image to grayscale, blur it slightly,
-			# and threshold it
-			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-			blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-
-# decent for car nd even door			thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_OTSU)[1]
-
-# decent for car			thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_TOZERO)[1]
-
-# the best for both			 thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV)[1]
-
-# the very good choice	 for both, likely best		thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV+cv2.THRESH_TOZERO)[1]
-			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.CALIB_CB_ADAPTIVE_THRESH, cv2.THRESH_BINARY_INV, 11, 2)
-
-# one of the best			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_SKIN_DETECTOR_MORPHING_METHOD_ERODE, cv2.THRESH_BINARY_INV, 11, 2)
-# very first best			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-
-			# find contours in the thresholded image and initialize the
-			# shape detector
-			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
-
+			cnts = self.reveal_features(image,reg)
 			return cnts
 
 		except Exception, err:
 			logging.exception('Error from throws() in detect_shapes:')
 			return None
 
-	def view_countours(self,cnts,img_nme):
+	def read_region(self,imgn,reg):
+		img = cv2.imread(imgn)
+		cropped = img[reg[3]:reg[5], reg[2]:reg[4]]
+		return cropped
+
+	def view_countours(self,cnts,img_nme, reg):
 		if ( cnts == None ):
 			return
 		ratio=1
-		img = cv2.imread(img_nme)
+		img = self.read_region(img_nme, reg)
 		for c in cnts:
 			# compute the center of the contour, then detect the name of the
 			# shape using only the contour
 			M = cv2.moments(c)
-			(shape, vertices) = self.detect(c)
+			(shape, vertices) = self.detect_shape(c)
 			A = M["m00"]  # Area
 			if ( not self.is_acceptable_area(A)):
 				continue
@@ -316,48 +196,44 @@ class GateKeeper:
 			cv2.imshow("image", img)
 			cv2.waitKey(0)
 
-	def only_acceptable_contours(self,cnts):
+	def get_features(self,cnts):
 		shapes = []
 		if ( cnts == None ):
 			return shapes
 		snum=0
-		seen = {}
 		for c in cnts:
 			# compute the center of the contour, then detect the name of the
 			# shape using only the contour
 			M = cv2.moments(c)
-			(shape, vertices) = self.detect(c)
+			(shape, vertices) = self.detect_shape(c)
 			A = M["m00"]  # Area
 
 			if (not self.is_acceptable_area(A)):
 				continue
-			skey=shape+"-"+str(A)
-			if ( not skey in seen.keys() ):
 #				logging.debug("recognized shape=" + shape + " area=" + str(A) )
-				shape=(snum,shape,A,vertices)
-				snum += 1
-				shapes.append(shape)
-				seen[skey]=1
+			shape=(snum,shape,A,vertices)
+			snum += 1
+			shapes.append(shape)
 		res= sorted(shapes, key=lambda x: x[1]+"{0:020.2f}".format(round(x[2],2)))
 		return res
 
-	def save_shapes(self, image_name, id, visual=True):
+	def save_features(self, image_name, reg, visual):
 		try:
-			cnts=self.get_contours(image_name)
+			cnts=self.get_contours(image_name, reg)
 			if ( visual ):
-				self.view_countours(cnts,image_name)
-			shapes=self.only_acceptable_contours(cnts)
+				self.view_countours(cnts,image_name, reg)
+			shapes=self.get_features(cnts)
 			for s in shapes:
-				self.gdb.save_shapes_region(s[1],s[2],s[3],id)
+				self.gdb.save_feature(s[1],s[2],s[3],reg[0])
 
 		except Exception, err:
-			logging.exception('Error from throws() in save_shapes:'+str(err))
+			logging.exception('Error from throws() in save_features:'+str(err))
 
 	def gate_state_changed(self,new_state):
 		logging.info("gate state changed, it is now open = "+str(new_state))
 		self.gdb.save_gate_state(new_state)
 
-	def detect(self, c):
+	def detect_shape(self, c):
 		# initialize the shape name and approximate the contour
 		shape = "unidentified"
 		peri = cv2.arcLength(c, True)

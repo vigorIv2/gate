@@ -41,8 +41,8 @@ CREATE TABLE if not exists regions(
 );
 
 delete from regions;
-insert into regions(name,left,upper,right,lower) values('car', 0, 280, 310, 640);
-insert into regions(name,left,upper,right,lower) values('gate', 305, 70, 417, 350);
+insert into regions(name,left,upper,right,lower,algorithm) values('car', 0, 280, 310, 640, 1);
+insert into regions(name,left,upper,right,lower,algorithm) values('gate', 305, 70, 417, 350, 1);
 select * from regions;
 
 
@@ -120,7 +120,9 @@ select * from known_shapes;
 
 DROP TABLE if exists shapes_regions;
 
-CREATE TABLE if not exists shapes_regions(
+DROP TABLE if exists feature;
+
+CREATE TABLE if not exists feature(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   shape varchar(40),
   vertices int,
@@ -128,4 +130,4 @@ CREATE TABLE if not exists shapes_regions(
   region_id INTEGER,
 	FOREIGN KEY(region_id) REFERENCES regions(id)
 );
-CREATE UNIQUE INDEX shape_region_idx on shapes_regions (shape,vertices,area,region_id);
+-- CREATE UNIQUE INDEX feature_idx on feature (shape,vertices,area,region_id);

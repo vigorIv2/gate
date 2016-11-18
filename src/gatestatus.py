@@ -15,16 +15,16 @@ if ( sys.argv[1].lower() == "-diff" ):
 elif ( sys.argv[1].lower() == "-dedupe" ):
 	gk.dedupe(sys.argv[2])
 elif (sys.argv[1].lower() == "-train"):
-	gk.snapshot_regions(sys.argv[2])
-	print "car="+str(gk.check_shapes_region(sys.argv[2], "car"))
-	print "gate="+str(gk.check_shapes_region(sys.argv[2],"gate"))
+	gk.snapshot_regions(sys.argv[2],True) # make visual flag optional
+	print "car="+str(gk.check_features(sys.argv[2], "car",True))
+	print "gate="+str(gk.check_features(sys.argv[2],"gate",True))
 elif (sys.argv[1].lower() == "-daemon"):
 	gk.daemonize()
 elif (sys.argv[1].lower() == "-dedupe_all"):
 	gk.dedupe_all()
 elif (sys.argv[1].lower() == "-check"):
-	print "car=" + str(gk.check_shapes_region(sys.argv[2], "car"))
- 	print "gate=" + str(gk.check_shapes_region(sys.argv[2], "gate"))
+	print "car=" + str(gk.check_features(sys.argv[2], "car",True))
+ 	print "gate=" + str(gk.check_features(sys.argv[2], "gate",True))
 #	gk.dedupe(sys.argv[2])
 else:
 	print "Unknown arguments "+str(sys.argv)
