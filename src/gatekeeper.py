@@ -83,7 +83,7 @@ class GateKeeper:
 		if ( A == None ):
 			return False
 		MIN_A = 17
-		MAX_A = 500000
+		MAX_A = 50000
 		return (A >= MIN_A and A <= MAX_A)
 
 	def find_best_algorithm(self,imgn,reg):
@@ -92,8 +92,10 @@ class GateKeeper:
 	def snapshot_regions(self,imgn,visual):
 		for reg in self.gdb.get_reqions():
 			algo=self.find_best_algorithm(imgn,reg)
+			self.gdb.update_algorithm(reg[0],algo)
 			self.gdb.delete_features(reg[0])
-			self.save_features(imgn,reg,visual)
+			regn=self.gdb.get_region(reg[1])
+			self.save_features(imgn,regn,visual)
 
 	def check_features(self,imgn,regname,visual):
 		reg=self.gdb.get_region(regname)
@@ -240,7 +242,9 @@ class GateKeeper:
 		approx = cv2.approxPolyDP(c, 0.04 * peri, True)
 
 		# if the shape is a triangle, it will have 3 vertices
-		if len(approx) == 3:
+		if len(approx) == 2:
+			shape = "line"
+		elif len(approx) == 3:
 			shape = "triangle"
 		# if the shape has 4 vertices, it is either a square or
 		# a rectangle

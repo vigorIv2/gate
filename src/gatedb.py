@@ -62,6 +62,10 @@ class gatedb:
 			return row
 		return None
 
+	def update_algorithm(self,id,algo):
+		with self.conn:
+			self.conn.execute("update regions set algorithm = ? where id = ?", (algo,id,))
+
 	def oui_vendor(self,oui):
 		for row in self.conn.execute('select vendor from oui_vendor where oui=?;',(oui,)):
 			return row[0]
