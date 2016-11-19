@@ -20,7 +20,7 @@ class GateKeeper:
 		self.gdb=gatedb.gatedb()
 		logging.basicConfig(filename='/var/log/motion/gatekeeper.log',format='%(asctime)s %(levelname)s %(message)s',level=logging.DEBUG)
 
-	DEFAULT_DEVIATION = 7 # 5% deviation of area
+	DEFAULT_DEVIATION = 14 # % deviation of area
 
 	# checks that area "a1" is within deviation "d" % from a2
 	def within(self,a1,a2,d=DEFAULT_DEVIATION):
@@ -33,6 +33,7 @@ class GateKeeper:
 		logging.info("find shape "+shape+" area="+str(area))
 		lr=0
 		for s in shapes:
+			logging.debug("finding shape " + str(s))
 			rshape = s[1]
 			if ( rshape == shape ):
 				if ( self.within(s[2],area) ):
@@ -86,16 +87,59 @@ class GateKeeper:
 		MAX_A = 50000
 		return (A >= MIN_A and A <= MAX_A)
 
-	def find_best_algorithm(self,imgn,reg):
-		return 1
+	def find_best_algorithm(self,imgnms,reg):
+		cntspername={}
+		delimiter=":"
+		# reveal contours for all files in training and all available algorithms
+		fnames=imgnms.split(",")
+		for n in fnames:
+			for a in (1,2):
+				regn=self.patch_region(reg,a)
+				cnts=self.get_contours(n,regn)
+				cntspername[n+delimiter+str(a)]=cnts
+		best_algo=-1
+		max_features=-1
+		best_fn="n/a"
+		# find algorithms that reveal maximum features
+		for ca in sorted(cntspername.keys()):
+			cur_features = self.get_features(cntspername[ca])
+			if ( len(cur_features) > max_features ):
+				max_features=cur_features
+				best_algo = int(ca.split(delimiter)[1])
+				best_fn=ca.split(delimiter)[0]
+		avg_features={}
+		# for the algorithm that reveals max features, build "average set" of features recognized on all pictures
+		logging.debug("IV TRACE in region "+str(reg))
+		for ca in sorted(cntspername.keys()):
+			if ( int(ca.split(delimiter)[1]) == best_algo ):
+				cur_features = self.get_features(cntspername[ca])
+				for cf in cur_features:
+					cfk=cf[1:]
+					if cfk in avg_features.keys():
+						avg_features[cfk] += 1
+						logging.debug("IV TRACE NON first feature in average " + str(cf))
+					else:
+						avg_features[cfk] = 1
+						logging.debug("IV TRACE first feature in average "+str(cf))
+		many_files=2 # int(len(fnames) / 3)
+		avg_features_set=[]
+		num=0
+		for k in avg_features.keys():
+			if (avg_features[k] >= many_files):
+				avg_features_set.append((num,k[0],k[1],k[2]))
+				num+=1
+		return (best_algo,best_fn,avg_features_set)
 
-	def snapshot_regions(self,imgn,visual):
+	def patch_region(self,reg,algo):
+		return (reg[0],reg[1],reg[2],reg[3],reg[4],reg[5],algo)
+
+	def snapshot_regions(self,imgnms,visual):
 		for reg in self.gdb.get_reqions():
-			algo=self.find_best_algorithm(imgn,reg)
+			(algo,fn,avg)=self.find_best_algorithm(imgnms,reg)
 			self.gdb.update_algorithm(reg[0],algo)
 			self.gdb.delete_features(reg[0])
-			regn=self.gdb.get_region(reg[1])
-			self.save_features(imgn,regn,visual)
+			regn=self.patch_region(reg,algo)
+			self.save_features(avg,regn)
 
 	def check_features(self,imgn,regname,visual):
 		reg=self.gdb.get_region(regname)
@@ -103,7 +147,6 @@ class GateKeeper:
 
 		res= self.shapes_exist(imgn,reg,shapes,visual)
 		logging.info("image="+imgn+" region="+regname+" res="+str(res))
-#		os.remove(rfn)
 		return res
 
 	def shapes_exist(self, image_name, reg, shapes_to_find, visual):
@@ -120,14 +163,10 @@ class GateKeeper:
 			else:
 				logging.debug("shape NOT found " + str(s))
 
-		if ( len(shapes) != fcnt ):
-			logging.debug("shapes_to_find=" + str(shapes_to_find))
-			logging.debug("shapes=" + str(shapes))
-
 		logging.info("fcnt="+str(fcnt)+" len(shapes_to_find)="+str(len(shapes_to_find)))
-		return self.within(len(shapes),fcnt,40)
+		return (len(shapes_to_find) / 2 ) <= fcnt
 
-	def reveal_features(self,img,reg):
+	def reveal_contours(self,img,reg):
 		algo=reg[6]
 		img = self.read_region(img,reg)
 		if ( algo == 1 ):
@@ -150,14 +189,14 @@ class GateKeeper:
 	def get_contours(self, image, reg):
 		if (not os.path.isfile(image)):
 			logging.warn("image file not found " + image)
-			return
+			return None
 		sz = os.path.getsize(image)
 		if (sz == 0L):
 			logging.warn("image file empty, ignoring " + image)
-			return
+			return None
 		logging.info("detect_shapes image_name=" + image)
 		try:
-			cnts = self.reveal_features(image,reg)
+			cnts = self.reveal_contours(image,reg)
 			return cnts
 
 		except Exception, err:
@@ -219,12 +258,8 @@ class GateKeeper:
 		res= sorted(shapes, key=lambda x: x[1]+"{0:020.2f}".format(round(x[2],2)))
 		return res
 
-	def save_features(self, image_name, reg, visual):
+	def save_features(self, shapes, reg):
 		try:
-			cnts=self.get_contours(image_name, reg)
-			if ( visual ):
-				self.view_countours(cnts,image_name, reg)
-			shapes=self.get_features(cnts)
 			for s in shapes:
 				self.gdb.save_feature(s[1],s[2],s[3],reg[0])
 
