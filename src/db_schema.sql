@@ -56,9 +56,9 @@ CREATE TABLE if not exists neighborhood_state(
 );
 CREATE UNIQUE INDEX neighbor_state_idx on neighborhood_state (state,neighbor_id);
 
-DROP TABLE if exists gate_button_event;
+DROP TABLE if exists gate_button;
 
-CREATE TABLE if not exists gate_button_event(
+CREATE TABLE if not exists gate_button(
 	no tinyint,
 	kind varchar(20),
 	ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
