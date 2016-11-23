@@ -78,21 +78,20 @@ insert into oui_vendor(oui,vendor) values('b4:07:f9','Samsung');
 insert into oui_vendor(oui,vendor) values('90:8d:6c','iPhone');
 insert into oui_vendor(oui,vendor) values('b4:ce:f6','Nexus 9');
 
-DROP TABLE if exists gate_state;
+DROP TABLE if exists gate;
 
-CREATE TABLE if not exists gate_state(
-  open boolean,
+CREATE TABLE if not exists gate(
+  closed boolean,
   ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
-DROP TABLE if exists car_parked;
+DROP TABLE if exists car;
 
-CREATE TABLE if not exists car_parked(
-  parked boolean,
+CREATE TABLE if not exists car(
+  yes boolean,
   ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
-
 
 DROP TABLE if exists known_shapes;
 
@@ -124,7 +123,6 @@ DROP TABLE if exists feature;
 
 CREATE TABLE if not exists feature(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  shape varchar(40),
   vertices int,
   area float,
   region_id INTEGER,

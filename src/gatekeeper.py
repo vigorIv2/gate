@@ -29,14 +29,13 @@ class GateKeeper:
 		return res # a within deviation range
 		
 	# to find a given shape and area in the array loaded from databse
-	def find_shape(self,shapes,shape,area):
-		logging.info("find shape "+shape+" area="+str(area))
+	def find_shape(self,shapes,vertices,area):
+		logging.info("find vertices="+str(vertices)+" area="+str(area))
 		lr=0
 		for s in shapes:
 			logging.debug("finding shape " + str(s))
-			rshape = s[1]
-			if ( rshape == shape ):
-				if ( self.within(s[2],area) ):
+			if ( s[2] == vertices ):
+				if ( self.within(s[1],area) ):
 					return lr
 			lr+=1
 		return None
@@ -93,7 +92,7 @@ class GateKeeper:
 		# reveal contours for all files in training and all available algorithms
 		fnames=imgnms.split(",")
 		for n in fnames:
-			for a in (1,2):
+			for a in (1,2,3,4,5):
 				regn=self.patch_region(reg,a)
 				cnts=self.get_contours(n,regn)
 				cntspername[n+delimiter+str(a)]=cnts
@@ -104,7 +103,7 @@ class GateKeeper:
 		for ca in sorted(cntspername.keys()):
 			cur_features = self.get_features(cntspername[ca])
 			if ( len(cur_features) > max_features ):
-				max_features=cur_features
+				max_features=len(cur_features)
 				best_algo = int(ca.split(delimiter)[1])
 				best_fn=ca.split(delimiter)[0]
 		avg_features={}
@@ -121,12 +120,12 @@ class GateKeeper:
 					else:
 						avg_features[cfk] = 1
 						logging.debug("IV TRACE first feature in average "+str(cf))
-		many_files=2 # int(len(fnames) / 3)
+		many_files=3 # int(len(fnames) / 3)
 		avg_features_set=[]
 		num=0
 		for k in avg_features.keys():
 			if (avg_features[k] >= many_files):
-				avg_features_set.append((num,k[0],k[1],k[2]))
+				avg_features_set.append((num,k[0],k[1]))
 				num+=1
 		return (best_algo,best_fn,avg_features_set)
 
@@ -154,10 +153,10 @@ class GateKeeper:
 		if (visual):
 			self.view_countours(cnts, image_name,reg)
 
-		shapes=self.get_features(cnts)
+		shapes =self.get_features(cnts)
 		fcnt=0
 		for s in shapes_to_find:
-			if ( self.find_shape(shapes, s[1],s[2]) != None ):
+			if ( self.find_shape(shapes, s[2],s[1]) != None ):
 				fcnt += 1
 				logging.debug("shape found " + str(s))
 			else:
@@ -169,22 +168,50 @@ class GateKeeper:
 	def reveal_contours(self,img,reg):
 		algo=reg[6]
 		img = self.read_region(img,reg)
-		if ( algo == 1 ):
+		if ( algo == 2 ):
 			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-			blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+			blurred = cv2.GaussianBlur(gray, (3, 3), 0)
 			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.CALIB_CB_ADAPTIVE_THRESH, cv2.THRESH_BINARY_INV, 11, 2)
 			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
 			return cnts
-		elif ( algo == 2 ):
+		if (algo == 3):
 			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-			blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-			thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY_INV)[1]
+			blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+			thresh = cv2.adaptiveThreshold(blurred, 128, cv2.CALIB_CB_ADAPTIVE_THRESH, cv2.THRESH_BINARY_INV, 11, 2)
 			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+			return cnts
+		elif ( algo == 4 ):
+			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+			blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+			thresh = cv2.threshold(blurred, 55, 255, cv2.THRESH_BINARY_INV)[1]
+			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) #  NONE) # APPROX_SIMPLE)
+			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+			return cnts
+		elif (algo == 5):
+			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+			blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+			thresh = cv2.threshold(blurred, 55, 255, cv2.THRESH_BINARY_INV)[1]
+			cnts = cv2.findContours(thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # NONE) # APPROX_SIMPLE)
+			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+			return cnts
+		elif (algo == 1):
+			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+			blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+			thresh = cv2.threshold(blurred, 55, 255, cv2.THRESH_BINARY_INV)[1]
+			cnts = cv2.findContours(thresh.copy(), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)  # NONE) # APPROX_SIMPLE)
 			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
 			return cnts
 		else:
 			return None
+
+	def check_garage_state(self,img,visual):
+		car=self.check_features(img, "car", visual)
+		self.gdb.save_car(car)
+		gate=self.check_features(img, "gate", visual)
+		self.gdb.save_gate(gate)
+		return (car,gate)
 
 	def get_contours(self, image, reg):
 		if (not os.path.isfile(image)):
@@ -195,13 +222,8 @@ class GateKeeper:
 			logging.warn("image file empty, ignoring " + image)
 			return None
 		logging.info("detect_shapes image_name=" + image)
-		try:
-			cnts = self.reveal_contours(image,reg)
-			return cnts
-
-		except Exception, err:
-			logging.exception('Error from throws() in detect_shapes:')
-			return None
+		cnts = self.reveal_contours(image,reg)
+		return cnts
 
 	def read_region(self,imgn,reg):
 		img = cv2.imread(imgn)
@@ -217,21 +239,21 @@ class GateKeeper:
 			# compute the center of the contour, then detect the name of the
 			# shape using only the contour
 			M = cv2.moments(c)
-			(shape, vertices) = self.detect_shape(c)
+			(vertices) = self.detect_shape(c)
 			A = M["m00"]  # Area
 			if ( not self.is_acceptable_area(A)):
 				continue
-			logging.info("in file" + img_nme + " recognized shape=" + shape + " area=" + str(A) )
+			logging.info("in file" + img_nme + " recognized vertices=" + str(vertices)+ " area=" + str(A) )
 			cX = int((M["m10"] / M["m00"]) * ratio)
 			cY = int((M["m01"] / M["m00"]) * ratio)
 
 			# multiply the contour (x, y)-coordinates by the resize ratio,
 			# then draw the contours and the name of the shape on the image
-			c = c.astype("float")
-			c *= ratio
-			c = c.astype("int")
-			cv2.drawContours(img, [c], -1, (0, 255, 0), 2)
-			cv2.putText(img, shape, (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+#			c = c.astype("float")
+#			c *= ratio
+#			c = c.astype("int")
+			cv2.drawContours(img, [c], -1, (0, 255, 0), 1)
+#			cv2.putText(img, shape, (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
 			# show the output image
 			cv2.imshow("image", img)
@@ -246,70 +268,30 @@ class GateKeeper:
 			# compute the center of the contour, then detect the name of the
 			# shape using only the contour
 			M = cv2.moments(c)
-			(shape, vertices) = self.detect_shape(c)
+			(vertices) = self.detect_shape(c)
 			A = M["m00"]  # Area
 
 			if (not self.is_acceptable_area(A)):
 				continue
 #				logging.debug("recognized shape=" + shape + " area=" + str(A) )
-			shape=(snum,shape,A,vertices)
+			shape=(snum,A,vertices)
 			snum += 1
 			shapes.append(shape)
-		res= sorted(shapes, key=lambda x: x[1]+"{0:020.2f}".format(round(x[2],2)))
+		res= sorted(shapes, key=lambda x: str(x[2])+"{0:020.2f}".format(round(x[1],2)))
 		return res
 
 	def save_features(self, shapes, reg):
-		try:
-			for s in shapes:
-				self.gdb.save_feature(s[1],s[2],s[3],reg[0])
-
-		except Exception, err:
-			logging.exception('Error from throws() in save_features:'+str(err))
+		for s in shapes:
+			self.gdb.save_feature(s[1],s[2],reg[0])
 
 	def gate_state_changed(self,new_state):
 		logging.info("gate state changed, it is now open = "+str(new_state))
 		self.gdb.save_gate_state(new_state)
 
 	def detect_shape(self, c):
-		# initialize the shape name and approximate the contour
-		shape = "unidentified"
 		peri = cv2.arcLength(c, True)
 		approx = cv2.approxPolyDP(c, 0.04 * peri, True)
-
-		# if the shape is a triangle, it will have 3 vertices
-		if len(approx) == 2:
-			shape = "line"
-		elif len(approx) == 3:
-			shape = "triangle"
-		# if the shape has 4 vertices, it is either a square or
-		# a rectangle
-		elif len(approx) == 4:
-			# compute the bounding box of the contour and use the
-			# bounding box to compute the aspect ratio
-			(x, y, w, h) = cv2.boundingRect(approx)
-			ar = w / float(h)
-			# a square will have an aspect ratio that is approximately
-			# equal to one, otherwise, the shape is a rectangle
-			shape = "square" if ar >= 0.95 and ar <= 1.05 else "rectangle"
-		# if the shape is a pentagon, it will have 5 vertices
-		elif len(approx) == 5:
-			shape = "pentagon"
-		elif len(approx) == 6:
-			shape = "hexagon"
-		elif len(approx) == 7:
-			shape = "heptagon"
-		elif len(approx) == 8:
-			shape = "octagon"
-		elif len(approx) == 9:
-			shape = "enneagon"
-		elif len(approx) == 10:
-			shape = "decagon"
-		# otherwise, we assume the shape is a circle
-		else:
-			shape = "circle"
-
-		# return the name of the shape
-		return (shape,len(approx))
+		return (len(approx))
 
 	def ping6(self, interface, addr):
 		# ping6 -c 1 -I eth0 -w 1 ff02::1

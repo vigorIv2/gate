@@ -52,8 +52,8 @@ class gatedb:
 			result.append(row)
 		return result
 
-	def gate_state(self):
-		for row in self.conn.execute('select open from gate_state order by ts desc limit 1;'):
+	def gate(self):
+		for row in self.conn.execute('select closed from gate_state order by ts desc limit 1;'):
 			return row[0] == 1
 		return None
 
@@ -71,26 +71,30 @@ class gatedb:
 			return row[0]
 		return 'Unknown'
 
-	def car_state(self):
-		for row in self.conn.execute('select open from car_parked order by ts desc limit 1;'):
+	def car(self):
+		for row in self.conn.execute('select yes from car order by ts desc limit 1;'):
 			return row[0] == 1
 		return True # for now let us pretend it is always there
 
-	def save_gate_state(self,gate_open = False): # 0 - False, 1 - True 
+	def save_gate(self,closed = False): # 0 - False, 1 - True
 		with self.conn:
-			self.conn.execute("insert into gate_state(open) values (?)", ((1 if gate_open else 0),))
+			self.conn.execute("insert into gate(closed) values (?)", ((1 if closed else 0),))
+
+	def save_car(self,yes = False): # 0 - False, 1 - True
+		with self.conn:
+			self.conn.execute("insert into car(yes) values (?)", ((1 if yes else 0),))
 
 	def save_neighbor_state(self,state,neib_id):  
 		with self.conn:
 			self.conn.execute("replace into neighborhood_state(state,neighbor_id) values (?,?)", (state,neib_id,))
 
-	def save_feature(self,shape,area,vertices,region_id):
+	def save_feature(self,area,vertices,region_id):
 		with self.conn:
-			self.conn.execute("insert into feature(shape,area,vertices,region_id) values (?,?,?,?)", (shape,area,vertices,region_id,))
+			self.conn.execute("insert into feature(area,vertices,region_id) values (?,?,?)", (area,vertices,region_id,))
 
 	def load_features(self,regid):
 		result = []
-		for row in self.conn.execute('select id, shape, area, vertices from feature where region_id = ? ',(regid,)):
+		for row in self.conn.execute('select id, area, vertices from feature where region_id = ? ',(regid,)):
 			result.append(row)
 		return result
 
