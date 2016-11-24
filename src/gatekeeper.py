@@ -209,10 +209,12 @@ class GateKeeper:
 	def check_garage_state(self,img,visual):
 		(car,fcnt)=self.check_features(img, "car", visual)
 		if fcnt > 0:
-			self.gdb.save_car(car)
+			if self.gdb.car() != car:
+				self.gdb.save_car(car)
 		(gate,fcnt)=self.check_features(img, "gate", visual)
 		if fcnt > 0:
-			self.gdb.save_gate(gate)
+			if self.gdb.gate() != gate:
+				self.gdb.save_gate(gate)
 		return (car,gate)
 
 	def get_contours(self, image, reg):

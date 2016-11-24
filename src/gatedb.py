@@ -53,7 +53,7 @@ class gatedb:
 		return result
 
 	def gate(self):
-		for row in self.conn.execute('select closed from gate_state order by ts desc limit 1;'):
+		for row in self.conn.execute('select closed from gate order by ts desc limit 1;'):
 			return row[0] == 1
 		return None
 
