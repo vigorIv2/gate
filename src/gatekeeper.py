@@ -146,7 +146,7 @@ class GateKeeper:
 
 		(res,cnt)= self.shapes_exist(imgn,reg,shapes,visual)
 		logging.info("image="+imgn+" region="+regname+" res="+str(res)+" cnt="+str(cnt))
-		return res
+		return (res,cnt)
 
 	def shapes_exist(self, image_name, reg, shapes_to_find, visual):
 		cnts=self.get_contours(image_name, reg)
