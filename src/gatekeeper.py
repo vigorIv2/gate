@@ -298,7 +298,7 @@ class GateKeeper:
 		return (len(approx))
 
 	def ping6(self, interface, addr):
-		# ping6 -c 1 -I eth0 -w 1 ff02::1
+		# ping6 -c 1 -I wlan0 -w 1 ff02::1
 		if ( ":" in addr ):
 			pingcmd="ping6"
 		else:
@@ -311,7 +311,7 @@ class GateKeeper:
 		out, err = p.communicate()
 
 	def broadcastPing6(self, interface, count):
-		# ping6 -c 3 -I eth0 ff02::1
+		# ping6 -c 3 -I wlan0 ff02::1
 		print "<<broadcast ping6 "
 		neighbors = []
 		pcmd=['ping6', '-s', '1', '-c', count, '-I', interface, 'ff02::1']
@@ -333,8 +333,8 @@ class GateKeeper:
 
 	def current_neighbors(self):
 		# ip neigh
-    # fe80::6203:8ff:fe91:5c56 dev eth0 lladdr 60:03:08:91:5c:56 REACHABLE
-    # fe80::76d0:2bff:fecf:1257 dev eth0 lladdr 74:d0:2b:cf:12:57 STALE
+    # fe80::6203:8ff:fe91:5c56 dev wlan0 lladdr 60:03:08:91:5c:56 REACHABLE
+    # fe80::76d0:2bff:fecf:1257 dev wlan0 lladdr 74:d0:2b:cf:12:57 STALE
 
 		response_json = {}
 		pcmd=['ip', 'neigh']
@@ -374,7 +374,7 @@ class GateKeeper:
 			cn=[]
 			ns=[]
 			if ( (num % 7) == 0 ): 
-				neigh=self.broadcastPing6('eth0','1')
+				neigh=self.broadcastPing6('wlan0','1')
 			num += 1 
 			neighm=self.current_neighbors()
 			for n in neighm['neighbors']:
@@ -385,7 +385,7 @@ class GateKeeper:
 					print "======= trusted mac ", n, " ",ln[3]," ", brand 
 					cn.append(ln[0])
 					if ( n['status'] == 'STALE' ):
-						self.ping6('eth0', n['ip'])
+						self.ping6('wlan0', n['ip'])
 					else:
 						if ( not self.lookup_prev_neighbors(pn,n['status'],ln) ):
 							self.new_neighbor(ln)
@@ -397,7 +397,7 @@ class GateKeeper:
 						print "======= trusted ip ", n, " ", jin[3]," ", brand
 						cn.append(lin[0])
 						if ( n['status'] == 'STALE' ):
-							self.ping6('eth0', n['ip'])
+							self.ping6('wlan0', n['ip'])
 						else:
 							if ( not self.lookup_prev_neighbors(pn,n['status'],lin) ):
 								self.new_neighbor(lin)
