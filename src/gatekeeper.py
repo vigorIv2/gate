@@ -144,8 +144,8 @@ class GateKeeper:
 		reg=self.gdb.get_region(regname)
 		shapes=self.gdb.load_features(reg[0])
 
-		res= self.shapes_exist(imgn,reg,shapes,visual)
-		logging.info("image="+imgn+" region="+regname+" res="+str(res))
+		(res,cnt)= self.shapes_exist(imgn,reg,shapes,visual)
+		logging.info("image="+imgn+" region="+regname+" res="+str(res)+" cnt="+str(cnt))
 		return res
 
 	def shapes_exist(self, image_name, reg, shapes_to_find, visual):
@@ -163,7 +163,7 @@ class GateKeeper:
 				logging.debug("shape NOT found " + str(s))
 
 		logging.info("fcnt="+str(fcnt)+" len(shapes_to_find)="+str(len(shapes_to_find)))
-		return (len(shapes_to_find) / 2 ) <= fcnt
+		return ((len(shapes_to_find) / 2 ) <= fcnt,fcnt)
 
 	def reveal_contours(self,img,reg):
 		algo=reg[6]
@@ -207,10 +207,12 @@ class GateKeeper:
 			return None
 
 	def check_garage_state(self,img,visual):
-		car=self.check_features(img, "car", visual)
-		self.gdb.save_car(car)
-		gate=self.check_features(img, "gate", visual)
-		self.gdb.save_gate(gate)
+		(car,fcnt)=self.check_features(img, "car", visual)
+		if fcnt > 0:
+			self.gdb.save_car(car)
+		(gate,fcnt)=self.check_features(img, "gate", visual)
+		if fcnt > 0:
+			self.gdb.save_gate(gate)
 		return (car,gate)
 
 	def get_contours(self, image, reg):
