@@ -18,6 +18,7 @@ class GateKeeper:
 	gdb = None
 	def __init__(self, ):
 		self.gdb=gatedb.gatedb()
+		self.interface='wlan0'
 		logging.basicConfig(filename='/var/log/motion/gatekeeper.log',format='%(asctime)s %(levelname)s %(message)s',level=logging.DEBUG)
 
 	DEFAULT_DEVIATION = 14 # % deviation of area
@@ -290,7 +291,7 @@ class GateKeeper:
 
 	def gate_state_changed(self,new_state):
 		logging.info("gate state changed, it is now open = "+str(new_state))
-		self.gdb.save_gate_state(new_state)
+		self.gdb.save_gate(new_state)
 
 	def detect_shape(self, c):
 		peri = cv2.arcLength(c, True)
@@ -374,7 +375,7 @@ class GateKeeper:
 			cn=[]
 			ns=[]
 			if ( (num % 7) == 0 ): 
-				neigh=self.broadcastPing6('eth0','1')
+				neigh=self.broadcastPing6(self.interface,'1')
 			num += 1 
 			neighm=self.current_neighbors()
 			for n in neighm['neighbors']:
@@ -385,7 +386,7 @@ class GateKeeper:
 					print "======= trusted mac ", n, " ",ln[3]," ", brand 
 					cn.append(ln[0])
 					if ( n['status'] == 'STALE' ):
-						self.ping6('eth0', n['ip'])
+						self.ping6(self.interface, n['ip'])
 					else:
 						if ( not self.lookup_prev_neighbors(pn,n['status'],ln) ):
 							self.new_neighbor(ln)
@@ -397,7 +398,7 @@ class GateKeeper:
 						print "======= trusted ip ", n, " ", jin[3]," ", brand
 						cn.append(lin[0])
 						if ( n['status'] == 'STALE' ):
-							self.ping6('eth0', n['ip'])
+							self.ping6(self.interface, n['ip'])
 						else:
 							if ( not self.lookup_prev_neighbors(pn,n['status'],lin) ):
 								self.new_neighbor(lin)
@@ -423,7 +424,7 @@ class GateKeeper:
 		logging.info("Command to close gate")
 		
 	def new_neighbor(self,ln):
-		gs=self.gdb.gate_state()
+		gs=self.gdb.gate()
 		logging.info("new neighbor "+ str(ln)+" gate state open = "+str(gs))
 		if ( gs == False ):
 			self.open_gate()
@@ -435,7 +436,7 @@ class GateKeeper:
 		logging.debug("neighbor went away "+ str(ln)+" min_ago "+few_min_ago)
 
 		if ( few_min_ago > ln[2] ):
-			if ( self.gdb.gate_state() ):
+			if ( self.gdb.gate() ):
 				self.close_gate()
 			logging.info("newghbor "+str(ln)+" away for too long, deleting neighbor state")
 			self.gdb.drop_neighbor_state(ln[0])
