@@ -424,9 +424,10 @@ class GateKeeper:
 		logging.info("Command to close gate")
 		
 	def new_neighbor(self,ln):
-		gs=self.gdb.gate()
-		logging.info("new neighbor "+ str(ln)+" gate state open = "+str(gs))
-		if ( gs == False ):
+		gate=self.gdb.gate()
+		car=self.gdb.car()
+		logging.info("new neighbor "+ str(ln)+" gate state closed = "+str(gate)+" car = "+str(car))
+		if ( gate == True and car == False ):
 			self.open_gate()
 			
 	def neighbor_away(self,ln):
