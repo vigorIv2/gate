@@ -299,7 +299,7 @@ class GateKeeper:
 		return (len(approx))
 
 	def ping6(self, interface, addr):
-		# ping6 -c 1 -I eth0 -w 1 ff02::1
+		# ping6 -c 1 -I wlan0 -w 1 ff02::1
 		if ( ":" in addr ):
 			pingcmd="ping6"
 		else:
@@ -312,7 +312,7 @@ class GateKeeper:
 		out, err = p.communicate()
 
 	def broadcastPing6(self, interface, count):
-		# ping6 -c 3 -I eth0 ff02::1
+		# ping6 -c 3 -I wlan0 ff02::1
 		print "<<broadcast ping6 "
 		neighbors = []
 		pcmd=['ping6', '-s', '1', '-c', count, '-I', interface, 'ff02::1']
@@ -334,8 +334,8 @@ class GateKeeper:
 
 	def current_neighbors(self):
 		# ip neigh
-    # fe80::6203:8ff:fe91:5c56 dev eth0 lladdr 60:03:08:91:5c:56 REACHABLE
-    # fe80::76d0:2bff:fecf:1257 dev eth0 lladdr 74:d0:2b:cf:12:57 STALE
+    # fe80::6203:8ff:fe91:5c56 dev wlan0 lladdr 60:03:08:91:5c:56 REACHABLE
+    # fe80::76d0:2bff:fecf:1257 dev wlan0 lladdr 74:d0:2b:cf:12:57 STALE
 
 		response_json = {}
 		pcmd=['ip', 'neigh']
