@@ -30,17 +30,19 @@ select * from trusted_neighbors;
 DROP TABLE if exists regions;
 
 CREATE TABLE if not exists regions(
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   name varchar(40),
   left int, 
-	upper int, 
-	right int, 
-	lower int,
-	algorithm int,
+  upper int,
+  right int,
+  lower int,
+  algorithm int,
   ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 delete from regions;
+insert into regions(name,left,upper,right,lower,algorithm) values('all', 0, 0, 480, 640, 1);
+
 insert into regions(name,left,upper,right,lower,algorithm) values('car', 0, 280, 310, 640, 1);
 insert into regions(name,left,upper,right,lower,algorithm) values('gate', 305, 70, 417, 350, 1);
 select * from regions;
@@ -49,19 +51,19 @@ select * from regions;
 DROP TABLE if exists neighborhood_state;
 
 CREATE TABLE if not exists neighborhood_state(
-	ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	state varchar(40),
-	neighbor_id INTEGER,
-	FOREIGN KEY(neighbor_id) REFERENCES trusted_neighbors(id)
+  ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  state varchar(40),
+  neighbor_id INTEGER,
+  FOREIGN KEY(neighbor_id) REFERENCES trusted_neighbors(id)
 );
 CREATE UNIQUE INDEX neighbor_state_idx on neighborhood_state (state,neighbor_id);
 
 DROP TABLE if exists gate_button;
 
 CREATE TABLE if not exists gate_button(
-	no tinyint,
-	kind varchar(20),
-	ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+  no tinyint,
+  kind varchar(20),
+  ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 DROP TABLE if exists oui_vendor;
@@ -125,7 +127,10 @@ CREATE TABLE if not exists feature(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   vertices int,
   area float,
+  cx int,
+  cy int,
+  coveredByCar boolean,
   region_id INTEGER,
-	FOREIGN KEY(region_id) REFERENCES regions(id)
+  FOREIGN KEY(region_id) REFERENCES regions(id)
 );
 -- CREATE UNIQUE INDEX feature_idx on feature (shape,vertices,area,region_id);

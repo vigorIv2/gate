@@ -11,26 +11,23 @@ if ( len(sys.argv) < 2 ):
 
 visual=False
 for p in sys.argv:
-	if ( p.lower() == "-v" ):
+	if p.lower() == "-v":
 		visual = True
-if ( sys.argv[1].lower() == "-diff" ):
+if sys.argv[1].lower() == "-diff":
 	sim=gk.diff_images(sys.argv[2],sys.argv[3])
 	print "Similar:", sim
-elif ( sys.argv[1].lower() == "-dedupe" ):
+elif sys.argv[1].lower() == "-dedupe":
 	gk.dedupe(sys.argv[2])
-elif (sys.argv[1].lower() == "-train"):
-  	gk.snapshot_regions(sys.argv[2],visual)
-#	(car, gate) = gk.check_garage_state(sys.argv[2],visual)
-#	print "car=" + str(car)
-#	print "gate=" + str(gate)
-elif (sys.argv[1].lower() == "-daemon"):
+elif sys.argv[1].lower() == "-train":
+	gk.snapshot_all(sys.argv[2],visual)
+elif sys.argv[1].lower() == "-daemon":
 	gk.daemonize()
-elif (sys.argv[1].lower() == "-dedupe_all"):
+elif sys.argv[1].lower() == "-dedupe_all":
 	gk.dedupe_all()
-elif (sys.argv[1].lower() == "-check"):
+elif sys.argv[1].lower() == "-check":
 	(car,gate)=gk.check_garage_state(sys.argv[2],visual)
 	print "car=" + str(car)
- 	print "gate=" + str(gate)
+	print "gate=" + str(gate)
 else:
 	print "Unknown arguments "+str(sys.argv)
 
