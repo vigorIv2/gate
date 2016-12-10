@@ -293,7 +293,7 @@ class GateKeeper:
 			snum += 1
 			if known is None:
 				if abs(devY) > 0.04:  # exclude this one, it is too far below or above the line of known shapes
-					continue 
+					continue
 			else:
 				if not self.is_known_feature(shape,known):
 					continue
