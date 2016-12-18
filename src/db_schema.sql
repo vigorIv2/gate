@@ -20,11 +20,11 @@ CREATE TABLE if not exists trusted_neighbors(
 );
 
 delete from trusted_neighbors;
-insert into trusted_neighbors(ip,mac,name) values('fe80::f66d:4ff:fe24:e024', 'f4:6d:04:24:e0:24', 'Asustek Tablet');
+-- insert into trusted_neighbors(ip,mac,name) values('fe80::f66d:4ff:fe24:e024', 'f4:6d:04:24:e0:24', 'Asustek Tablet');
 insert into trusted_neighbors(ip,mac,name) values('fe80::14cf:84b3:d7bb:4839', '30:63:6b:b0:5e:4e', 'Apple iPhone Blizz');
-insert into trusted_neighbors(ip,mac,name) values('fe80::b607:f9ff:feee:20d7', 'b4:07:f9:ee:20:d7', 'Samsung G1');
-insert into trusted_neighbors(ip,mac,name) values('fe80::b6ce:f6ff:fedf:947', 'b4:ce:f6:df:09:47', 'Google Nexus 9');
-insert into trusted_neighbors(ip,mac,name) values('fe80::8ae:b4e3:4250:f62c', '90:8d:6c:cd:b2:d4', 'Apple iPhone, Owl');
+-- insert into trusted_neighbors(ip,mac,name) values('fe80::b607:f9ff:feee:20d7', 'b4:07:f9:ee:20:d7', 'Samsung G1');
+-- insert into trusted_neighbors(ip,mac,name) values('fe80::b6ce:f6ff:fedf:947', 'b4:ce:f6:df:09:47', 'Google Nexus 9');
+-- insert into trusted_neighbors(ip,mac,name) values('fe80::8ae:b4e3:4250:f62c', '90:8d:6c:cd:b2:d4', 'Apple iPhone, Owl');
 select * from trusted_neighbors;
 
 DROP TABLE if exists regions;
