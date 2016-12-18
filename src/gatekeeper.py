@@ -16,6 +16,7 @@ class GateKeeper:
 	' base class for GateKeeper software '
 
 	gdb = None
+
 	def __init__(self, ):
 		self.gdb=gatedb.gatedb()
 		self.interface='wlan0'
@@ -24,22 +25,12 @@ class GateKeeper:
 	DEFAULT_DEVIATION = 14 # % deviation of area
 
 	# checks that area "a1" is within deviation "d" % from a2
-	def within(self,a1,a2,d=DEFAULT_DEVIATION):
-		df=(a1*d)/100 # deviation 
-		res=( a1 < (a2+df) and a1 > (a2-df) ) # a within deviation range
+	def within(self, a1, a2, d=DEFAULT_DEVIATION):
+		df=(a1*d)/100 # deviation
+		a2pdf=a2+df
+		a2mdf=a2-df
+		res=a1 < a2pdf and a1 > a2mdf # a within deviation range
 		return res # a within deviation range
-		
-	# to find a given shape and area in the array loaded from databse
-	def find_shape(self,shapes,vertices,area):
-		logging.info("find vertices="+str(vertices)+" area="+str(area))
-		lr=0
-		for s in shapes:
-			logging.debug("finding shape " + str(s))
-			if ( s[2] == vertices ):
-				if ( self.within(s[1],area) ):
-					return lr
-			lr+=1
-		return None
 
 	# compares two images and returns a number - if numer too big - imges too different
 	def similar_images(self,img1,img2):
@@ -49,7 +40,7 @@ class GateKeeper:
 		(h1, w1) = image1.shape[:2]
 		image2 = cv2.imread(img2)
 		(h2, w2) = image2.shape[:2]
-		if ( h1 != h2 or w1 != w2 ):
+		if h1 != h2 or w1 != w2:
 			logging.info("images similar? h1="+ str(h1)+" h2="+str(h2)+" w1="+str(w1)+" w2="+str(w2))
 			return False
 		cmd=['compare', '-metric', 'AE', '-fuzz', '5%', img1, img2, '/dev/null']
@@ -67,7 +58,7 @@ class GateKeeper:
 		(h1, w1) = image1.shape[:2]
 		image2 = cv2.imread(img2)
 		(h2, w2) = image2.shape[:2]
-		if (h1 != h2 or w1 != w2):
+		if h1 != h2 or w1 != w2:
 			logging.info("images different? h1=" + str(h1) + " h2=" + str(h2) + " w1=" + str(w1) + " w2=" + str(w2))
 			return False
 		cmd = ['compare', '-verbose', '-metric', 'MAE', img1, img2, 'null:']
@@ -75,63 +66,24 @@ class GateKeeper:
 		out, err = p.communicate()
 		diff=0
 		for ln in err.split("\n"):
-			if ( "all:" in ln ):
+			if "all:" in ln:
 				diff=float(ln.lstrip().split(" ")[2].lstrip("(").rstrip(")"))
 		logging.info("images different? cmd=" + " ".join(cmd) + " result=" + str(diff))
 		return diff < too_different
 
-	def is_acceptable_area(self,A):
-		if ( A == None ):
+	def is_acceptable_feature(self,A,vertices):
+		if A == None or A == 0: # ignore zero area
 			return False
-		MIN_A = 17
-		MAX_A = 50000
-		return (A >= MIN_A and A <= MAX_A)
-
-	def find_best_algorithm(self,imgnms,reg):
-		cntspername={}
-		delimiter=":"
-		# reveal contours for all files in training and all available algorithms
-		fnames=imgnms.split(",")
-		for n in fnames:
-			for a in (1,2,3,4,5):
-				regn=self.patch_region(reg,a)
-				cnts=self.get_contours(n,regn)
-				cntspername[n+delimiter+str(a)]=cnts
-		best_algo=-1
-		max_features=-1
-		best_fn="n/a"
-		# find algorithms that reveal maximum features
-		for ca in sorted(cntspername.keys()):
-			cur_features = self.get_features(cntspername[ca])
-			if ( len(cur_features) > max_features ):
-				max_features=len(cur_features)
-				best_algo = int(ca.split(delimiter)[1])
-				best_fn=ca.split(delimiter)[0]
-		avg_features={}
-		# for the algorithm that reveals max features, build "average set" of features recognized on all pictures
-		logging.debug("IV TRACE in region "+str(reg))
-		for ca in sorted(cntspername.keys()):
-			if ( int(ca.split(delimiter)[1]) == best_algo ):
-				cur_features = self.get_features(cntspername[ca])
-				for cf in cur_features:
-					cfk=cf[1:]
-					if cfk in avg_features.keys():
-						avg_features[cfk] += 1
-						logging.debug("IV TRACE NON first feature in average " + str(cf))
-					else:
-						avg_features[cfk] = 1
-						logging.debug("IV TRACE first feature in average "+str(cf))
-		many_files=3 # int(len(fnames) / 3)
-		avg_features_set=[]
-		num=0
-		for k in avg_features.keys():
-			if (avg_features[k] >= many_files):
-				avg_features_set.append((num,k[0],k[1]))
-				num+=1
-		return (best_algo,best_fn,avg_features_set)
+		if vertices == 2: # ignore lines
+			return False
+		if not vertices in (3,5,8,7): # wrong shape - ignore
+			return False
+		MIN_A = 70
+		MAX_A = 800
+		return A >= MIN_A and A <= MAX_A
 
 	def patch_region(self,reg,algo):
-		return (reg[0],reg[1],reg[2],reg[3],reg[4],reg[5],algo)
+		return reg[0],reg[1],reg[2],reg[3],reg[4],reg[5],algo
 
 	def snapshot_regions(self,imgnms,visual):
 		for reg in self.gdb.get_reqions():
@@ -141,63 +93,80 @@ class GateKeeper:
 			regn=self.patch_region(reg,algo)
 			self.save_features(avg,regn)
 
+	def snapshot_all(self,imgnms,visual):
+		reg=self.gdb.get_region("all")
+		cnts = self.get_contours(imgnms, reg)
+		shapes = self.get_features(cnts,imgnms,reg,visual)
+		(coveredByCar, clearGate) = self.split_shapes(shapes,visual)
+		if coveredByCar == None or len(coveredByCar) < 3:
+			msg="Not enough shapes covered by car detected"
+			print msg
+			logging.error(msg)
+			return
+
+		if clearGate == None or len(clearGate) < 3:
+			msg="Not enough shapes on gate detected"
+			print msg
+			logging.error(msg)
+			return
+
+		self.gdb.delete_features(reg[0])
+
+		self.save_features(coveredByCar,reg,True)
+		self.save_features(clearGate,reg,False)
+
 	def check_features(self,imgn,regname,visual):
 		reg=self.gdb.get_region(regname)
 		shapes=self.gdb.load_features(reg[0])
+		shapesCoveredByCar = filter(lambda x: x[5] == 1, shapes)
+		shapesGate = filter(lambda x: x[5] == 0, shapes)
 
-		(res,cnt)= self.shapes_exist(imgn,reg,shapes,visual)
-		logging.info("image="+imgn+" region="+regname+" res="+str(res)+" cnt="+str(cnt))
-		return (res,cnt)
+		(resCar0, cnt1)= self.shapes_exist(imgn,reg,shapesCoveredByCar,visual)
+		resCar=not resCar0
+		logging.info("image="+imgn+" region="+regname+" resCar="+str(resCar)+" cnt="+str(cnt1))
+		(resGate,cnt2)= self.shapes_exist(imgn,reg,shapesGate,visual)
+		logging.info("image="+imgn+" region="+regname+" resGate="+str(resGate)+" cnt="+str(cnt2))
+		return resCar,resGate,cnt1+cnt2
 
 	def shapes_exist(self, image_name, reg, shapes_to_find, visual):
 		cnts=self.get_contours(image_name, reg)
-		if (visual):
-			self.view_countours(cnts, image_name,reg)
-
-		shapes =self.get_features(cnts)
-		fcnt=0
-		for s in shapes_to_find:
-			if ( self.find_shape(shapes, s[2],s[1]) != None ):
-				fcnt += 1
-				logging.debug("shape found " + str(s))
-			else:
-				logging.debug("shape NOT found " + str(s))
-
+		shapes=self.get_features(cnts, image_name, reg, visual, known=shapes_to_find)
+		fcnt=len(shapes)
 		logging.info("fcnt="+str(fcnt)+" len(shapes_to_find)="+str(len(shapes_to_find)))
-		return ((len(shapes_to_find) / 2 ) <= fcnt,fcnt)
+		return len(shapes_to_find) == fcnt, fcnt
 
 	def reveal_contours(self,img,reg):
 		algo=reg[6]
 		img = self.read_region(img,reg)
-		if ( algo == 2 ):
+		if algo == 2:
 			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 			blurred = cv2.GaussianBlur(gray, (3, 3), 0)
 			thresh = cv2.adaptiveThreshold(blurred, 255, cv2.CALIB_CB_ADAPTIVE_THRESH, cv2.THRESH_BINARY_INV, 11, 2)
 			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
 			return cnts
-		if (algo == 3):
+		if algo == 3:
 			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 			blurred = cv2.GaussianBlur(gray, (3, 3), 0)
 			thresh = cv2.adaptiveThreshold(blurred, 128, cv2.CALIB_CB_ADAPTIVE_THRESH, cv2.THRESH_BINARY_INV, 11, 2)
 			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
 			return cnts
-		elif ( algo == 4 ):
+		elif algo == 4:
 			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 			blurred = cv2.GaussianBlur(gray, (3, 3), 0)
 			thresh = cv2.threshold(blurred, 55, 255, cv2.THRESH_BINARY_INV)[1]
 			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) #  NONE) # APPROX_SIMPLE)
 			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
 			return cnts
-		elif (algo == 5):
+		elif algo == 5:
 			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 			blurred = cv2.GaussianBlur(gray, (3, 3), 0)
 			thresh = cv2.threshold(blurred, 55, 255, cv2.THRESH_BINARY_INV)[1]
 			cnts = cv2.findContours(thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # NONE) # APPROX_SIMPLE)
 			cnts = cnts[0] if imutils.is_cv2() else cnts[1]
 			return cnts
-		elif (algo == 1):
+		elif algo == 1:
 			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 			blurred = cv2.GaussianBlur(gray, (3, 3), 0)
 			thresh = cv2.threshold(blurred, 55, 255, cv2.THRESH_BINARY_INV)[1]
@@ -207,7 +176,7 @@ class GateKeeper:
 		else:
 			return None
 
-	def check_garage_state(self,img,visual):
+	def check_garage_state_regions(self,img,visual):
 		(car,fcnt)=self.check_features(img, "car", visual)
 		if fcnt > 0:
 			if self.gdb.car() != car:
@@ -216,14 +185,25 @@ class GateKeeper:
 		if fcnt > 0:
 			if self.gdb.gate() != gate:
 				self.gdb.save_gate(gate)
-		return (car,gate)
+		return car,gate
+
+	def check_garage_state(self,img,visual):
+		(car,gate,fcnt)=self.check_features(img, "all", visual)
+		if not gate:
+			car= None
+		if fcnt > 0:
+			if self.gdb.gate() != gate:
+				self.gdb.save_gate(gate)
+			if self.gdb.car() != car:
+				self.gdb.save_car(car)
+		return car,gate
 
 	def get_contours(self, image, reg):
-		if (not os.path.isfile(image)):
+		if not os.path.isfile(image):
 			logging.warn("image file not found " + image)
 			return None
 		sz = os.path.getsize(image)
-		if (sz == 0L):
+		if sz == 0L:
 			logging.warn("image file empty, ignoring " + image)
 			return None
 		logging.info("detect_shapes image_name=" + image)
@@ -235,59 +215,116 @@ class GateKeeper:
 		cropped = img[reg[3]:reg[5], reg[2]:reg[4]]
 		return cropped
 
-	def view_countours(self,cnts,img_nme, reg):
-		if ( cnts == None ):
-			return
+	def is_known_feature(self, f, kk):
+		for k in kk:
+			res = 0
+			if f[2] == k[2]:
+				res += 1
+			for i in (1, 3, 4):
+				if self.within(f[i], k[i], 20 ):
+					res += 1
+			if res == 4:
+				return True
+		return False
+
+	def get_features(self, cnts, img_nme, reg, visual, known=None):
+		if cnts is None:
+			return []
+		snum=0
 		ratio=1
 		img = self.read_region(img_nme, reg)
+		sumY=0
+		numY=0
 		for c in cnts:
 			# compute the center of the contour, then detect the name of the
 			# shape using only the contour
 			M = cv2.moments(c)
 			(vertices) = self.detect_shape(c)
 			A = M["m00"]  # Area
-			if ( not self.is_acceptable_area(A)):
+			if not self.is_acceptable_feature(A, vertices):
 				continue
-			logging.info("in file" + img_nme + " recognized vertices=" + str(vertices)+ " area=" + str(A) )
+
 			cX = int((M["m10"] / M["m00"]) * ratio)
 			cY = int((M["m01"] / M["m00"]) * ratio)
+			sumY+=cY
+			numY+=1
+			avgY=sumY/numY
+			devY=float(cY - avgY) / avgY
 
-			# multiply the contour (x, y)-coordinates by the resize ratio,
-			# then draw the contours and the name of the shape on the image
-#			c = c.astype("float")
-#			c *= ratio
-#			c = c.astype("int")
-			cv2.drawContours(img, [c], -1, (0, 255, 0), 1)
-#			cv2.putText(img, shape, (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+			shape=(snum,A,vertices,cX,cY)
+			if abs(devY) > 0.09: # exclude this one, it is too far below or above the line of known shapes
+				sumY -= cY
+				numY -= 1
+				avgY = sumY / numY
+				continue
 
-			# show the output image
-			cv2.imshow("image", img)
-			cv2.waitKey(0)
+			snum += 1
 
-	def get_features(self,cnts):
+			msg="preliminary detection file" + img_nme + " vertices=" + str(vertices) + " area=" + str(A)+" cX="+str(cX)+" cY="+str(cY)+" avgY="+str(avgY)+" devY={0:.4f}".format(round(devY,2))
+			print(msg)
+			logging.info(msg)
+
+			if visual:
+				cv2.drawContours(img, [c], -1, (255, 0, 0), 1)
+
+				# show the output image
+				cv2.imshow("image", img)
+				cv2.waitKey(0)
+
 		shapes = []
-		if ( cnts == None ):
-			return shapes
-		snum=0
 		for c in cnts:
 			# compute the center of the contour, then detect the name of the
 			# shape using only the contour
 			M = cv2.moments(c)
 			(vertices) = self.detect_shape(c)
 			A = M["m00"]  # Area
-
-			if (not self.is_acceptable_area(A)):
+			if A <= 0:
 				continue
-#				logging.debug("recognized shape=" + shape + " area=" + str(A) )
-			shape=(snum,A,vertices)
-			snum += 1
-			shapes.append(shape)
-		res= sorted(shapes, key=lambda x: str(x[2])+"{0:020.2f}".format(round(x[1],2)))
-		return res
 
-	def save_features(self, shapes, reg):
+			cX = int((M["m10"] / M["m00"]) * ratio)
+			cY = int((M["m01"] / M["m00"]) * ratio)
+			devY = float(cY - avgY) / avgY
+
+			shape = (snum, A, vertices, cX, cY)
+			if not self.is_acceptable_feature(A, vertices):
+				continue
+
+			# logging.debug("recognized shape=" + shape + " area=" + str(A) )
+			snum += 1
+			if known is None:
+				if abs(devY) > 0.04:  # exclude this one, it is too far below or above the line of known shapes
+					continue
+			else:
+				if not self.is_known_feature(shape,known):
+					continue
+			shapes.append(shape)
+
+			msg = "final detection file" + img_nme + " vertices=" + str(vertices) + " area=" + str(A) + " cX=" + str(cX) + " cY=" + str(cY) + " avgY=" + str(avgY) + " devY={0:.4f}".format(round(devY,2))
+			logging.info(msg)
+
+			print(msg)
+			if visual:
+ 				cv2.drawContours(img, [c], -1, (0, 255, 0), 2)
+
+				# show the output image
+				cv2.imshow("image", img)
+				cv2.waitKey(0)
+		return shapes
+
+	def split_shapes(self,shapes,visual):
+		res=sorted(shapes, key=lambda x: "{0:020.2f}".format(round(x[3],2)))
+		covered=res[:3]
+		clear=res[3:]
+		if visual:
+			for r in covered:
+				print "covered res1="+str(r)
+			for r in clear:
+				print "clear res2=" + str(r)
+		return covered, clear
+
+	def save_features(self, shapes, reg, coveredByCar):
 		for s in shapes:
-			self.gdb.save_feature(s[1],s[2],reg[0])
+			self.gdb.save_feature(s[1],s[2],s[3],s[4],coveredByCar,reg[0])
 
 	def gate_state_changed(self,new_state):
 		logging.info("gate state changed, it is now open = "+str(new_state))
@@ -300,7 +337,7 @@ class GateKeeper:
 
 	def ping6(self, interface, addr):
 		# ping6 -c 1 -I wlan0 -w 1 ff02::1
-		if ( ":" in addr ):
+		if ":" in addr:
 			pingcmd="ping6"
 		else:
 			pingcmd="ping"  
@@ -320,8 +357,8 @@ class GateKeeper:
 		p = subprocess.Popen(pcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		out, err = p.communicate()
 
-		if ( len(err) != 0 ): 
-			print "Error in ping6 " , err
+		if len(err) != 0:
+			print "Error in ping6 ", err
 			return 
 		for l in out.split("\n"):
 			ls=l.split(" ") 
@@ -395,7 +432,7 @@ class GateKeeper:
 					jip=n['ip'].lower().split("%")[0]
 					lin=self.lookup_neighbor(trusted_neighbors,n['mac'],2)
 					if (lin != None):
-						print "======= trusted ip ", n, " ", jin[3]," ", brand
+						print "======= trusted ip ", n, " ", jip[3]," ", brand
 						cn.append(lin[0])
 						if ( n['status'] == 'STALE' ):
 							self.ping6(self.interface, n['ip'])
