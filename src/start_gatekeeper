@@ -1,0 +1,12 @@
+#!/bin/bash 
+sleep 10
+
+#set -x	
+killall motion
+mkdir -p /var/run/motion
+
+find /opt/data/motion* -empty -type f -exec rm -f {} \;
+
+cd /home/iotuser
+fuser /dev/video0 || motion
+/home/iotuser/gate/src/gatestatus.py -daemon
