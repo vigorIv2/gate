@@ -424,10 +424,9 @@ class GateKeeper:
 					cn.append(ln[0])
 					if ( n['status'] == 'STALE' ):
 						self.ping6(self.interface, n['ip'])
-					else:
-						if ( not self.lookup_prev_neighbors(pn,n['status'],ln) ):
-							self.new_neighbor(ln)
-						self.gdb.save_neighbor_state(n['status'],ln[0])
+					if ( not self.lookup_prev_neighbors(pn,n['status'],ln) ):
+						self.new_neighbor(ln)
+					self.gdb.save_neighbor_state(n['status'],ln[0])
 				else:
 					jip=n['ip'].lower().split("%")[0]
 					lin=self.lookup_neighbor(trusted_neighbors,n['mac'],2)
@@ -436,10 +435,9 @@ class GateKeeper:
 						cn.append(lin[0])
 						if ( n['status'] == 'STALE' ):
 							self.ping6(self.interface, n['ip'])
-						else:
-							if ( not self.lookup_prev_neighbors(pn,n['status'],lin) ):
-								self.new_neighbor(lin)
-							self.gdb.save_neighbor_state(n['status'],lin[0])
+						if ( not self.lookup_prev_neighbors(pn,n['status'],lin) ):
+							self.new_neighbor(lin)
+						self.gdb.save_neighbor_state(n['status'],lin[0])
 
 			print "-=-=-=-=-=-=-=-==-=---=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 			for n in pn:
