@@ -3,10 +3,19 @@ sleep 10
 
 #set -x	
 killall motion
-mkdir -p /var/run/motion
-
+killall gatestatus.py
+dt=`date +%Y%m%d%H%M%S`
+tar czvf --remove-files "/var/log/motion/archive_$dt.tgz" /var/log/motion/*.log
+find /var/log/motion/ -iname '*.tgz' -mtime +30 -type f -exec rm -f {} \;
 find /opt/data/motion* -empty -type f -exec rm -f {} \;
+
+mkdir -p /var/run/motion
 
 cd /home/iotuser
 fuser /dev/video0 || motion
-nohup /home/iotuser/gate/src/gatestatus.py -daemon &
+
+while true; do
+  date >> /var/log/motion/start_gatekeeper.log
+  nohup /home/iotuser/gate/src/gatestatus.py -daemon >> /var/log/motion/start_gatekeeper.log
+done &
+
