@@ -58,7 +58,7 @@ class gatedb:
 		return None
 
 	def get_region(self,regname):
-		for row in self.conn.execute('select id, name, left, upper, right, lower, algorithm from regions where name = ? ', (regname,)):
+		for row in self.conn.execute('select id, name, left, upper, right, lower, algorithm from regions where name=?;', (regname,)):
 			return row
 		return None
 

@@ -9,4 +9,4 @@ find /opt/data/motion* -empty -type f -exec rm -f {} \;
 
 cd /home/iotuser
 fuser /dev/video0 || motion
-/home/iotuser/gate/src/gatestatus.py -daemon
+nohup /home/iotuser/gate/src/gatestatus.py -daemon &

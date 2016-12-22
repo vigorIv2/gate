@@ -12,6 +12,8 @@ import gatedb
 import re
 import datetime
 
+import RPi.GPIO as GPIO ## Import GPIO library
+
 class GateKeeper:
 	' base class for GateKeeper software '
 
@@ -23,6 +25,17 @@ class GateKeeper:
 		logging.basicConfig(filename='/var/log/motion/gatekeeper.log',format='%(asctime)s %(levelname)s %(message)s',level=logging.DEBUG)
 
 	DEFAULT_DEVIATION = 14 # % deviation of area
+
+	def push_button(self):
+		logging.info("push_button begin")
+		GPIO.setwarnings(False)
+		GPIO.setmode(GPIO.BOARD)
+		pin=7
+		GPIO.setup(pin, GPIO.OUT)
+		GPIO.output(pin,False)
+		time.sleep(4)
+		GPIO.output(pin,True)
+		logging.info("push_button end")
 
 	# checks that area "a1" is within deviation "d" % from a2
 	def within(self, a1, a2, d=DEFAULT_DEVIATION):
@@ -342,7 +355,7 @@ class GateKeeper:
 		else:
 			pingcmd="ping"  
 			addr = addr.split("%")[0]
-		print ">> ", pingcmd, " ", addr
+#		print ">> ", pingcmd, " ", addr
 		pcmd=[pingcmd, '-c', '1', '-s', '1', '-I', interface, '-w', '1', addr]
 		logging.debug(" ".join(pcmd))
 		p = subprocess.Popen(pcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -376,7 +389,7 @@ class GateKeeper:
 
 		response_json = {}
 		pcmd=['ip', 'neigh']
-		logging.debug(" ".join(pcmd))
+#		logging.debug(" ".join(pcmd))
 		p = subprocess.Popen(pcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		out, err = p.communicate()
 
@@ -439,7 +452,7 @@ class GateKeeper:
 							self.new_neighbor(lin)
 						self.gdb.save_neighbor_state(n['status'],lin[0])
 
-			print "-=-=-=-=-=-=-=-==-=---=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+#			print "-=-=-=-=-=-=-=-==-=---=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 			for n in pn:
 				if ( not n[0] in cn ):
 					self.neighbor_away(n)
@@ -454,9 +467,11 @@ class GateKeeper:
 	
 	def open_gate(self):
 		logging.info("Command to open gate")
-		
+		self.push_button()
+
 	def close_gate(self):
 		logging.info("Command to close gate")
+		self.push_button()
 		
 	def new_neighbor(self,ln):
 		gate=self.gdb.gate()
@@ -467,12 +482,12 @@ class GateKeeper:
 			
 	def neighbor_away(self,ln):
 		# check to see when status was last updated
-		few_min_ago_ts=datetime.datetime.now() - datetime.timedelta(minutes=2)
+		few_min_ago_ts=datetime.datetime.now() - datetime.timedelta(minutes=1)
 		few_min_ago=few_min_ago_ts.strftime('%Y-%m-%d %H:%M:%S')
 		logging.debug("neighbor went away "+ str(ln)+" min_ago "+few_min_ago)
 
 		if ( few_min_ago > ln[2] ):
-			if ( self.gdb.gate() ):
+			if ( self.gdb.gate() == False ):
 				self.close_gate()
 			logging.info("newghbor "+str(ln)+" away for too long, deleting neighbor state")
 			self.gdb.drop_neighbor_state(ln[0])
