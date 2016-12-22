@@ -23,6 +23,9 @@ class gatedb:
 			result.append(row)
 		return result
 
+	def close(self):
+		self.conn.close()
+
 	def get_events(self):
 		result = []
 		for row in self.conn.execute('SELECT * FROM security'):

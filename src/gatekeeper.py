@@ -127,6 +127,7 @@ class GateKeeper:
 
 		self.save_features(coveredByCar,reg,True)
 		self.save_features(clearGate,reg,False)
+		self.gdb.close()
 
 	def check_features(self,imgn,regname,visual):
 		reg=self.gdb.get_region(regname)
@@ -201,15 +202,19 @@ class GateKeeper:
 		return car,gate
 
 	def check_garage_state(self,img,visual):
-		(car,gate,fcnt)=self.check_features(img, "all", visual)
+		(car, gate, fcnt)=self.check_features(img, "all", visual)
 		if not gate:
-			car= None
+			car = None
 		if fcnt > 0:
 			if self.gdb.gate() != gate:
 				self.gdb.save_gate(gate)
 			if self.gdb.car() != car:
 				self.gdb.save_car(car)
-		return car,gate
+
+		self.gdb.conn.commit()
+		self.gdb.close()
+		self.gdb = None
+		return car, gate
 
 	def get_contours(self, image, reg):
 		if not os.path.isfile(image):
@@ -421,6 +426,8 @@ class GateKeeper:
 	def neighborhood_watch(self,trusted_neighbors):
 		num=7
 		while True:
+			if self.gdb is None:
+				self.gdb = gatedb.gatedb()
 			pn=self.gdb.get_neighborhood_state()
 			cn=[]
 			ns=[]
@@ -440,6 +447,7 @@ class GateKeeper:
 					if ( not self.lookup_prev_neighbors(pn,n['status'],ln) ):
 						self.new_neighbor(ln)
 					self.gdb.save_neighbor_state(n['status'],ln[0])
+					self.gdb.conn.commit()
 				else:
 					jip=n['ip'].lower().split("%")[0]
 					lin=self.lookup_neighbor(trusted_neighbors,n['mac'],2)
@@ -451,12 +459,16 @@ class GateKeeper:
 						if ( not self.lookup_prev_neighbors(pn,n['status'],lin) ):
 							self.new_neighbor(lin)
 						self.gdb.save_neighbor_state(n['status'],lin[0])
+						self.gdb.conn.commit()
 
 #			print "-=-=-=-=-=-=-=-==-=---=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 			for n in pn:
 				if ( not n[0] in cn ):
 					self.neighbor_away(n)
 					cn.append(n[0]) # so not to drop it again
+			self.gdb.conn.commit()
+			self.gdb.conn.close()
+			self.gdb = None
 			time.sleep(1.9)
 
 	def lookup_prev_neighbors(self,pn,st,ln):
