@@ -18,6 +18,7 @@ class gatedb:
 		return
 
 	def close(self):
+		db.close()
 		return
 
 	def get_files_before(self,current_file):
@@ -44,7 +45,7 @@ class gatedb:
 
 	def get_region(self,regname):
 #		db(db.my_table.id > 0).select()
-		return db(db.region.name == regname).select()
+		return db(db.region.name == regname).select()[0]
 
 
 	def oui_vendor(self,oui):
@@ -65,9 +66,8 @@ class gatedb:
 		with self.conn:
 			self.conn.execute("insert into car(yes) values (?)", ((1 if yes else 0),))
 
-	def save_feature(self, area, vertices, cx, cy, coveredByCar, region_id):
-		with self.conn:
-			self.conn.execute("insert into feature(area,vertices,cx,cy,coveredByCar,region_id) values (?,?,?,?,?,?)", (area,vertices,cx,cy,(1 if coveredByCar else 0),region_id,))
+	def save_feature(self, _area, _vertices, _cx, _cy, _coveredByCar, _region_id):
+		db.features.insert(area=_area, vertices=_vertices, cx=_cx, cy=_cy, coveredByCar=(1 if _coveredByCar else 0), region_id=_region_id)
 
 	def load_features(self, regid):
 		result = []
@@ -76,8 +76,7 @@ class gatedb:
 		return result
 
 	def delete_features(self, region_id):
-		with self.conn:
-			self.conn.execute("delete from feature where region_id = ?", (region_id,))
+		db(db.features.region_id == region_id).delete()
 
 	def drop_neighbor_state(self, neib_id):
 		with self.conn:

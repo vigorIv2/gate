@@ -100,8 +100,6 @@ class GateKeeper:
 
 	def snapshot_all(self,imgnms,visual):
 		reg=self.gdb.get_region("all")
-		print reg
-		return
 		cnts = self.get_contours(imgnms, reg)
 		shapes = self.get_features(cnts,imgnms,reg,visual)
 		(coveredByCar, clearGate) = self.split_shapes(shapes,visual)
@@ -117,7 +115,7 @@ class GateKeeper:
 			logging.error(msg)
 			return
 
-		self.gdb.delete_features(reg[0])
+		self.gdb.delete_features(reg.id)
 
 		self.save_features(coveredByCar,reg,True)
 		self.save_features(clearGate,reg,False)
@@ -144,7 +142,7 @@ class GateKeeper:
 		return len(shapes_to_find) == fcnt, fcnt
 
 	def reveal_contours(self,img,reg):
-		algo=reg[6]
+		algo=reg.algorithm
 		img = self.read_region(img,reg)
 		if algo == 2:
 			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -224,7 +222,7 @@ class GateKeeper:
 
 	def read_region(self,imgn,reg):
 		img = cv2.imread(imgn)
-		cropped = img[reg[3]:reg[5], reg[2]:reg[4]]
+		cropped = img[reg.left:reg.right, reg.upper:reg.lower]
 		return cropped
 
 	def is_known_feature(self, f, kk):
@@ -336,7 +334,7 @@ class GateKeeper:
 
 	def save_features(self, shapes, reg, coveredByCar):
 		for s in shapes:
-			self.gdb.save_feature(s[1],s[2],s[3],s[4],coveredByCar,reg[0])
+			self.gdb.save_feature(s[1],s[2],s[3],s[4],coveredByCar,reg.id)
 
 	def gate_state_changed(self,new_state):
 		logging.info("gate state changed, it is now open = "+str(new_state))
