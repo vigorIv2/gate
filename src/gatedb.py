@@ -44,7 +44,8 @@ class gatedb:
 		return None
 
 	def get_region(self,regname):
-		return self.db().select(self.db().region.name == regname)
+#		db(db.my_table.id > 0).select()
+		return self.db(self.db.region.name == regname).select()
 
 
 	def oui_vendor(self,oui):
