@@ -16,14 +16,10 @@ for p in sys.argv:
 if sys.argv[1].lower() == "-diff":
 	sim=gk.diff_images(sys.argv[2],sys.argv[3])
 	print "Similar:", sim
-elif sys.argv[1].lower() == "-dedupe":
-	gk.dedupe(sys.argv[2])
 elif sys.argv[1].lower() == "-train":
 	gk.snapshot_all(sys.argv[2],visual)
 elif sys.argv[1].lower() == "-daemon":
 	gk.daemonize()
-elif sys.argv[1].lower() == "-dedupe_all":
-	gk.dedupe_all()
 elif sys.argv[1].lower() == "-check":
 	(car,gate)=gk.check_garage_state(sys.argv[2],visual)
 	print "car=" + str(car)

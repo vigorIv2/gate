@@ -98,16 +98,10 @@ class GateKeeper:
 	def patch_region(self,reg,algo):
 		return reg[0],reg[1],reg[2],reg[3],reg[4],reg[5],algo
 
-	def snapshot_regions(self,imgnms,visual):
-		for reg in self.gdb.get_reqions():
-			(algo,fn,avg)=self.find_best_algorithm(imgnms,reg)
-			self.gdb.update_algorithm(reg[0],algo)
-			self.gdb.delete_features(reg[0])
-			regn=self.patch_region(reg,algo)
-			self.save_features(avg,regn)
-
 	def snapshot_all(self,imgnms,visual):
 		reg=self.gdb.get_region("all")
+		print reg
+		return
 		cnts = self.get_contours(imgnms, reg)
 		shapes = self.get_features(cnts,imgnms,reg,visual)
 		(coveredByCar, clearGate) = self.split_shapes(shapes,visual)
@@ -507,23 +501,4 @@ class GateKeeper:
 	def daemonize(self):
 		self.neighborhood_watch(self.gdb.get_trusted_neighbors())
 
-	def dedupe(self,cur_fn):
-		logging.info("Current file "+cur_fn)
-		if (not os.path.exists(cur_fn)):
-			self.gdb.delete_file_record(cur_fn)
-			return
-		for fn in self.gdb.get_files_before(cur_fn):
-			if (not os.path.exists(fn)):
-				self.gdb.delete_file_record(fn)
-				continue
-			if ( self.diff_images(cur_fn,fn) ):
-				logging.info("Removing file "+fn+" as very similar to current file "+cur_fn)
-				os.remove(fn)
-				self.gdb.delete_file_record(fn)
-			else:
-				break
 
-
-	def dedupe_all(self):
-		for e in self.gdb.get_events():
-			self.dedupe(e[1])

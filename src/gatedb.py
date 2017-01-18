@@ -1,42 +1,25 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import json
-import time
 import sys
-import sqlite3
+
+sys.path.insert(1, '/home/iotuser/gate/web2py')
+
+from gluon import DAL, Field
+from gluon.validators import IS_NOT_EMPTY, IS_EMAIL, IS_NOT_IN_DB, IS_INT_IN_RANGE
 
 class gatedb:
 	' module to maintan state in the database, sqlite3 for now should be sufficient '
 
-	_db_sqlite3_name="/opt/data/sqlite3/garage.db"
-
-	conn = None
+	db = None
 
 	def __init__(self):
-		self.conn = sqlite3.connect(self._db_sqlite3_name)
+		db = DAL('sqlite://storage.sqlite', folder='/home/iotuser/gate/web2py/applications/gate/databases')
+		execfile('/home/iotuser/gate/web2py/applications/gate/models/db_gate.py')
 		return
 
-	def get_shapes(self):
-		result = []
-		for row in self.conn.execute('SELECT * FROM known_shapes ORDER BY id'):
-			result.append(row)
-		return result
-
 	def close(self):
-		self.conn.close()
-
-	def get_events(self):
-		result = []
-		for row in self.conn.execute('SELECT * FROM security'):
-			result.append(row)
-		return result
-
-	def get_reqions(self):
-		result = []
-		for row in self.conn.execute('SELECT id, name, left, upper, right, lower, algorithm FROM regions'):
-			result.append(row)
-		return result
+		return
 
 	def get_files_before(self,current_file):
 		ts=""
@@ -61,13 +44,8 @@ class gatedb:
 		return None
 
 	def get_region(self,regname):
-		for row in self.conn.execute('select id, name, left, upper, right, lower, algorithm from regions where name=?;', (regname,)):
-			return row
-		return None
+		return self.db().select(self.db().region.name == regname)
 
-	def update_algorithm(self,id,algo):
-		with self.conn:
-			self.conn.execute("update regions set algorithm = ? where id = ?", (algo,id,))
 
 	def oui_vendor(self,oui):
 		for row in self.conn.execute('select vendor from oui_vendor where oui=?;',(oui,)):
@@ -87,10 +65,6 @@ class gatedb:
 		with self.conn:
 			self.conn.execute("insert into car(yes) values (?)", ((1 if yes else 0),))
 
-	def save_neighbor_state(self, state, neib_id):
-		with self.conn:
-			self.conn.execute("replace into neighborhood_state(state,neighbor_id) values (?,?)", (state,neib_id,))
-
 	def save_feature(self, area, vertices, cx, cy, coveredByCar, region_id):
 		with self.conn:
 			self.conn.execute("insert into feature(area,vertices,cx,cy,coveredByCar,region_id) values (?,?,?,?,?,?)", (area,vertices,cx,cy,(1 if coveredByCar else 0),region_id,))
@@ -105,19 +79,9 @@ class gatedb:
 		with self.conn:
 			self.conn.execute("delete from feature where region_id = ?", (region_id,))
 
-	def delete_file_record(self, fname):
-		with self.conn:
-			self.conn.execute("delete from security where filename=?", (fname,))
-
 	def drop_neighbor_state(self, neib_id):
 		with self.conn:
 			self.conn.execute("delete from neighborhood_state where neighbor_id = ?;", (neib_id,))
-
-	def get_neighborhood_state(self):
-		result = []
-		for row in self.conn.execute("SELECT neighbor_id,state,datetime(ts, 'localtime') FROM neighborhood_state ORDER BY neighbor_id, ts"):
-			result.append(row)
-		return result
 
 
 
