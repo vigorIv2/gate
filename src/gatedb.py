@@ -14,7 +14,7 @@ class gatedb:
 	db = None
 
 	def __init__(self):
-		db = DAL('sqlite://storage.sqlite', folder='/home/iotuser/gate/web2py/applications/gate/databases')
+		self.db = DAL('sqlite://storage.sqlite', folder='/home/iotuser/gate/web2py/applications/gate/databases')
 		execfile('/home/iotuser/gate/web2py/applications/gate/models/db_gate.py')
 		return
 
