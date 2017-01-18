@@ -8,14 +8,13 @@ sys.path.insert(1, '/home/iotuser/gate/web2py')
 from gluon import DAL, Field
 from gluon.validators import IS_NOT_EMPTY, IS_EMAIL, IS_NOT_IN_DB, IS_INT_IN_RANGE
 
+db = DAL('sqlite://storage.sqlite', folder='/home/iotuser/gate/web2py/applications/gate/databases')
+execfile('/home/iotuser/gate/web2py/applications/gate/models/db_gate.py')
+
 class gatedb:
 	' module to maintan state in the database, sqlite3 for now should be sufficient '
 
-	db = None
-
 	def __init__(self):
-		self.db = DAL('sqlite://storage.sqlite', folder='/home/iotuser/gate/web2py/applications/gate/databases')
-		execfile('/home/iotuser/gate/web2py/applications/gate/models/db_gate.py')
 		return
 
 	def close(self):
@@ -45,7 +44,7 @@ class gatedb:
 
 	def get_region(self,regname):
 #		db(db.my_table.id > 0).select()
-		return self.db(self.db.region.name == regname).select()
+		return db(db.region.name == regname).select()
 
 
 	def oui_vendor(self,oui):
