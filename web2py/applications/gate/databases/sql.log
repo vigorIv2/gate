@@ -1,0 +1,231 @@
+timestamp: 2017-01-11T07:31:06.963675
+CREATE TABLE "auth_user"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+success!
+timestamp: 2017-01-11T07:31:07.176881
+CREATE TABLE "auth_group"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "role" VARCHAR(512),
+    "description" TEXT
+);
+success!
+timestamp: 2017-01-11T07:31:07.303143
+CREATE TABLE "auth_membership"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "user_id" INTEGER REFERENCES "auth_user" ("id") ON DELETE CASCADE  ,
+    "group_id" INTEGER REFERENCES "auth_group" ("id") ON DELETE CASCADE  
+);
+success!
+timestamp: 2017-01-11T07:31:07.425846
+CREATE TABLE "auth_permission"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "group_id" INTEGER REFERENCES "auth_group" ("id") ON DELETE CASCADE  ,
+    "name" VARCHAR(512),
+    "table_name" VARCHAR(512),
+    "record_id" INTEGER
+);
+success!
+timestamp: 2017-01-11T07:31:07.543145
+CREATE TABLE "auth_event"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "time_stamp" TIMESTAMP,
+    "client_ip" VARCHAR(512),
+    "user_id" INTEGER REFERENCES "auth_user" ("id") ON DELETE CASCADE  ,
+    "origin" VARCHAR(512),
+    "description" TEXT
+);
+success!
+timestamp: 2017-01-11T07:31:07.677701
+CREATE TABLE "auth_cas"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "user_id" INTEGER REFERENCES "auth_user" ("id") ON DELETE CASCADE  ,
+    "created_on" TIMESTAMP,
+    "service" VARCHAR(512),
+    "ticket" VARCHAR(512),
+    "renew" CHAR(1)
+);
+success!
+timestamp: 2017-01-11T07:31:07.808668
+CREATE TABLE "company"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "name" VARCHAR(512) NOT NULL UNIQUE
+);
+success!
+timestamp: 2017-01-11T07:31:07.909637
+CREATE TABLE "contact"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "name" VARCHAR(512) NOT NULL,
+    "company" INTEGER REFERENCES "company" ("id") ON DELETE CASCADE  ,
+    "picture" VARCHAR(512),
+    "email" VARCHAR(512),
+    "phone_number" VARCHAR(512),
+    "address" VARCHAR(512)
+);
+success!
+timestamp: 2017-01-11T07:31:08.026935
+CREATE TABLE "log"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "body" TEXT NOT NULL,
+    "posted_on" TIMESTAMP,
+    "contact" INTEGER REFERENCES "contact" ("id") ON DELETE CASCADE  
+);
+success!
+timestamp: 2017-01-11T07:31:08.143791
+CREATE TABLE "oui"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "oui" VARCHAR(8) NOT NULL,
+    "vendor" VARCHAR(50) NOT NULL
+);
+success!
+timestamp: 2017-01-11T07:31:52.151230
+CREATE TABLE "security"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "camera" INTEGER,
+    "filename" VARCHAR(128) NOT NULL,
+    "frame" INTEGER,
+    "file_type" INTEGER,
+    "time_stamp" TIMESTAMP,
+    "text_event" VARCHAR(40)
+);
+success!
+timestamp: 2017-01-11T07:31:52.480156
+CREATE TABLE "region"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "name" VARCHAR(40) NOT NULL,
+    "left" INTEGER,
+    "upper" INTEGER,
+    "right" INTEGER,
+    "lower" INTEGER,
+    "algorithm" INTEGER
+);
+success!
+timestamp: 2017-01-11T07:31:52.746312
+CREATE TABLE "trusted"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "ip" VARCHAR(128) NOT NULL,
+    "mac" VARCHAR(40),
+    "name" VARCHAR(40),
+    "ts" TIMESTAMP
+);
+success!
+timestamp: 2017-01-11T07:31:52.953609
+CREATE TABLE "neighborhood"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "state" VARCHAR(40) NOT NULL,
+    "neighbor_id" INTEGER REFERENCES "trusted" ("id") ON DELETE CASCADE  ,
+    "ts" TIMESTAMP
+);
+success!
+timestamp: 2017-01-11T07:31:53.151265
+CREATE TABLE "gate"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "closed" CHAR(1) NOT NULL,
+    "ts" TIMESTAMP
+);
+success!
+timestamp: 2017-01-11T07:31:53.388325
+CREATE TABLE "car"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "yes" CHAR(1) NOT NULL,
+    "ts" TIMESTAMP
+);
+success!
+timestamp: 2017-01-11T07:31:53.660255
+CREATE TABLE "features"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "vertices" INTEGER NOT NULL,
+    "area" DOUBLE,
+    "cx" INTEGER,
+    "cy" INTEGER,
+    "coveredByCar" CHAR(1),
+    "region_id" INTEGER REFERENCES "region" ("id") ON DELETE CASCADE  ,
+    "ts" TIMESTAMP
+);
+success!
+timestamp: 2017-01-11T07:32:47.083922
+CREATE TABLE "person"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "name" VARCHAR(512),
+    "email" VARCHAR(512)
+);
+success!
+timestamp: 2017-01-11T07:32:47.291278
+CREATE TABLE "product"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "seller_id" INTEGER REFERENCES "person" ("id") ON DELETE CASCADE  ,
+    "name" VARCHAR(512),
+    "description" TEXT,
+    "picture" VARCHAR(512)
+);
+success!
+timestamp: 2017-01-11T07:32:47.539530
+CREATE TABLE "purchase"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "buyer_id" INTEGER REFERENCES "person" ("id") ON DELETE CASCADE  ,
+    "product_id" INTEGER REFERENCES "product" ("id") ON DELETE CASCADE  ,
+    "quantity" INTEGER
+);
+success!
+timestamp: 2017-01-14T03:42:33.913841
+CREATE TABLE "auth_user"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+success!
+timestamp: 2017-01-14T03:42:34.051224
+CREATE TABLE "auth_group"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "role" VARCHAR(512),
+    "description" TEXT
+);
+success!
+timestamp: 2017-01-14T03:42:34.176200
+CREATE TABLE "auth_membership"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "user_id" INTEGER REFERENCES "auth_user" ("id") ON DELETE CASCADE  ,
+    "group_id" INTEGER REFERENCES "auth_group" ("id") ON DELETE CASCADE  
+);
+success!
+timestamp: 2017-01-14T03:42:34.347813
+CREATE TABLE "auth_permission"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "group_id" INTEGER REFERENCES "auth_group" ("id") ON DELETE CASCADE  ,
+    "name" VARCHAR(512),
+    "table_name" VARCHAR(512),
+    "record_id" INTEGER
+);
+success!
+timestamp: 2017-01-14T03:42:34.497895
+CREATE TABLE "auth_event"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "time_stamp" TIMESTAMP,
+    "client_ip" VARCHAR(512),
+    "user_id" INTEGER REFERENCES "auth_user" ("id") ON DELETE CASCADE  ,
+    "origin" VARCHAR(512),
+    "description" TEXT
+);
+success!
+timestamp: 2017-01-14T03:42:34.645287
+CREATE TABLE "auth_cas"(
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "user_id" INTEGER REFERENCES "auth_user" ("id") ON DELETE CASCADE  ,
+    "created_on" TIMESTAMP,
+    "service" VARCHAR(512),
+    "ticket" VARCHAR(512),
+    "renew" CHAR(1)
+);
+success!
