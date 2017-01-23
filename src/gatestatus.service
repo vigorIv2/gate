@@ -1,0 +1,10 @@
+[Unit]
+Description=Gate Status service
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/python /home/iotuser/gate/src/gatestatus.py -daemon > /var/log/motion/gatestatus.log 2>&1
+
+[Install]
+WantedBy=multi-user.target

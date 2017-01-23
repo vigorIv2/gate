@@ -28,6 +28,8 @@ class GateKeeper:
 
 	def push_button(self):
 		logging.info("push_button begin")
+		return
+
 		GPIO.setwarnings(False)
 		GPIO.setmode(GPIO.BOARD)
 		pin=7
@@ -123,9 +125,9 @@ class GateKeeper:
 
 	def check_features(self,imgn,regname,visual):
 		reg=self.gdb.get_region(regname)
-		shapes=self.gdb.load_features(reg[0])
-		shapesCoveredByCar = filter(lambda x: x[5] == 1, shapes)
-		shapesGate = filter(lambda x: x[5] == 0, shapes)
+		shapes=self.gdb.load_features(reg.id)
+		shapesCoveredByCar = filter(lambda x: x.coveredByCar == 1, shapes)
+		shapesGate = filter(lambda x: x.coveredByCar == 0, shapes)
 
 		(resCar0, cnt1)= self.shapes_exist(imgn,reg,shapesCoveredByCar,visual)
 		resCar=not resCar0
@@ -203,9 +205,7 @@ class GateKeeper:
 			if self.gdb.car() != car:
 				self.gdb.save_car(car)
 
-		self.gdb.conn.commit()
 		self.gdb.close()
-		self.gdb = None
 		return car, gate
 
 	def get_contours(self, image, reg):
@@ -228,11 +228,11 @@ class GateKeeper:
 	def is_known_feature(self, f, kk):
 		for k in kk:
 			res = 0
-			if f[2] == k[2]:
+			if f[2] == k.vertices:
 				res += 1
-			for i in (1, 3, 4):
-				if self.within(f[i], k[i], 20 ):
-					res += 1
+			if self.within(f[1], k.area, 20 ): res += 1
+			if self.within(f[3], k.cx, 20 ): res += 1
+			if self.within(f[4], k.cy, 20 ): res += 1
 			if res == 4:
 				return True
 		return False
@@ -271,7 +271,6 @@ class GateKeeper:
 			snum += 1
 
 			msg="preliminary detection file" + img_nme + " vertices=" + str(vertices) + " area=" + str(A)+" cX="+str(cX)+" cY="+str(cY)+" avgY="+str(avgY)+" devY={0:.4f}".format(round(devY,2))
-			print(msg)
 			logging.info(msg)
 
 			if visual:
@@ -312,7 +311,6 @@ class GateKeeper:
 			msg = "final detection file" + img_nme + " vertices=" + str(vertices) + " area=" + str(A) + " cX=" + str(cX) + " cY=" + str(cY) + " avgY=" + str(avgY) + " devY={0:.4f}".format(round(devY,2))
 			logging.info(msg)
 
-			print(msg)
 			if visual:
  				cv2.drawContours(img, [c], -1, (0, 255, 0), 2)
 
@@ -352,7 +350,6 @@ class GateKeeper:
 		else:
 			pingcmd="ping"  
 			addr = addr.split("%")[0]
-#		print ">> ", pingcmd, " ", addr
 		pcmd=[pingcmd, '-c', '1', '-s', '1', '-I', interface, '-w', '1', addr]
 		logging.debug(" ".join(pcmd))
 		p = subprocess.Popen(pcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -411,7 +408,7 @@ class GateKeeper:
 	def lookup_neighbor(self,neighbors,key,cn):
 		keyl=key.lower()
 		for n in neighbors:
-			if ( n[cn] == keyl ):
+			if ( n.mac == keyl ):
 				return n
 		return None
 
@@ -428,44 +425,39 @@ class GateKeeper:
 			num += 1 
 			neighm=self.current_neighbors()
 			for n in neighm['neighbors']:
-				brand=self.lookup_brand(n['mac'].lower())
+#				brand=self.lookup_brand(n['mac'].lower())
 				ln=self.lookup_neighbor(trusted_neighbors,n['mac'],2)
 				ns.append(n)
 				if ( ln != None ):
-					print "======= trusted mac ", n, " ",ln[3]," ", brand 
-					cn.append(ln[0])
+					print "======= trusted mac ", n, ln.name 
+					cn.append(ln.id)
 					if ( n['status'] == 'STALE' ):
 						self.ping6(self.interface, n['ip'])
 					if ( not self.lookup_prev_neighbors(pn,n['status'],ln) ):
 						self.new_neighbor(ln)
-					self.gdb.save_neighbor_state(n['status'],ln[0])
-					self.gdb.conn.commit()
+					self.gdb.save_neighbor_state(n['status'],ln.id)
 				else:
 					jip=n['ip'].lower().split("%")[0]
 					lin=self.lookup_neighbor(trusted_neighbors,n['mac'],2)
 					if (lin != None):
-						print "======= trusted ip ", n, " ", jip[3]," ", brand
+						print "======= trusted ip ", n, jip.name
 						cn.append(lin[0])
 						if ( n['status'] == 'STALE' ):
 							self.ping6(self.interface, n['ip'])
 						if ( not self.lookup_prev_neighbors(pn,n['status'],lin) ):
 							self.new_neighbor(lin)
-						self.gdb.save_neighbor_state(n['status'],lin[0])
-						self.gdb.conn.commit()
+						self.gdb.save_neighbor_state(n['status'],lin.id)
 
-#			print "-=-=-=-=-=-=-=-==-=---=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 			for n in pn:
-				if ( not n[0] in cn ):
+				if ( not n.id in cn ):
 					self.neighbor_away(n)
-					cn.append(n[0]) # so not to drop it again
-			self.gdb.conn.commit()
-			self.gdb.conn.close()
-			self.gdb = None
+					cn.append(n.id) # so not to drop it again
+			self.gdb.close()
 			time.sleep(1.9)
 
 	def lookup_prev_neighbors(self,pn,st,ln):
 		for l in pn:
-			if ( l[0] == ln[0] ):
+			if ( l.id == ln.id ):
 				return True
 		return False
 	
@@ -490,11 +482,11 @@ class GateKeeper:
 		few_min_ago=few_min_ago_ts.strftime('%Y-%m-%d %H:%M:%S')
 		logging.debug("neighbor went away "+ str(ln)+" min_ago "+few_min_ago)
 
-		if ( few_min_ago > ln[2] ):
+		if ( few_min_ago > str(ln.ts) ):
 			if ( self.gdb.gate() == False ):
 				self.close_gate()
 			logging.info("newghbor "+str(ln)+" away for too long, deleting neighbor state")
-			self.gdb.drop_neighbor_state(ln[0])
+			self.gdb.drop_neighbor_state(ln.neighbor_id)
 			
 	def daemonize(self):
 		self.neighborhood_watch(self.gdb.get_trusted_neighbors())

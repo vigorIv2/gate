@@ -8,17 +8,34 @@ sys.path.insert(1, '/home/iotuser/gate/web2py')
 from gluon import DAL, Field
 from gluon.validators import IS_NOT_EMPTY, IS_EMAIL, IS_NOT_IN_DB, IS_INT_IN_RANGE
 
-db = DAL('sqlite://storage.sqlite', folder='/home/iotuser/gate/web2py/applications/gate/databases')
-execfile('/home/iotuser/gate/web2py/applications/gate/models/db_gate.py')
+db = None
+
+def opendb():
+	global db
+	if ( db == None ):
+#		print "open database DAL"
+		db = DAL('sqlite://storage.sqlite', folder='/home/iotuser/gate/web2py/applications/gate/databases')
+		execfile('/home/iotuser/gate/web2py/applications/gate/models/db_gate.py')
+
+def closedb():
+	global db
+#	print "close database DAL"
+	db.close()
+	db = None
 
 class gatedb:
 	' module to maintan state in the database, sqlite3 for now should be sufficient '
 
 	def __init__(self):
+		opendb()
 		return
 
 	def close(self):
-		db.close()
+		closedb()
+		return
+
+	def open(self):
+		opendb()
 		return
 
 	def get_files_before(self,current_file):
@@ -33,54 +50,63 @@ class gatedb:
 		return result
 
 	def get_trusted_neighbors(self):
-		result = []
-		for row in self.conn.execute("SELECT id,ip,mac,name,datetime(ts, 'localtime') FROM trusted_neighbors ORDER BY id"):
-			result.append(row)
-		return result
+		self.open()
+		res=db().select(db.trusted.ALL)
+		return res
+
+	def get_neighborhood_state(self):
+		self.open()
+		res=db().select(db.neighborhood.ALL)
+		return res
 
 	def gate(self):
-		for row in self.conn.execute('select closed from gate order by ts desc limit 1;'):
-			return row[0] == 1
-		return None
+		self.open()
+		row=db().select(db.gate.ALL,orderby=~db.gate.ts, limitby=(0, 1) ).first()
+		if row == None : return True
+		return row.closed
 
 	def get_region(self,regname):
-#		db(db.my_table.id > 0).select()
+		self.open()
 		return db(db.region.name == regname).select()[0]
 
-
-	def oui_vendor(self,oui):
-		for row in self.conn.execute('select vendor from oui_vendor where oui=?;',(oui,)):
-			return row[0]
-		return 'Unknown'
+	def oui_vendor(self,_oui):
+		self.open()
+		return db(db.oui.oui == _oui).select()
 
 	def car(self):
-		for row in self.conn.execute('select yes from car order by ts desc limit 1;'):
-			return row[0] == 1
-		return True # for now let us pretend it is always there
+		self.open()
+		row=db().select(db.car.ALL, orderby=~db.car.ts, limitby=(0, 1)).first()
+		if row == None : return True
+		return row.yes
 
-	def save_gate(self, closed=False): # 0 - False, 1 - True
-		with self.conn:
-			self.conn.execute("insert into gate(closed) values (?)", ((1 if closed else 0),))
+	def save_gate(self, _closed=False): # 0 - False, 1 - True
+		self.open()
+		db.gate.insert(closed=(1 if _closed else 0))
 
-	def save_car(self, yes=False): # 0 - False, 1 - True
-		with self.conn:
-			self.conn.execute("insert into car(yes) values (?)", ((1 if yes else 0),))
+	def save_neighbor_state(self, _state, _neighbor_id): 
+		self.open()
+		db(db.neighborhood.neighbor_id == _neighbor_id).delete()
+		db.neighborhood.insert(state=_state, neighbor_id=_neighbor_id)
+
+	def save_car(self, _yes=False): # 0 - False, 1 - True
+		self.open()
+		db.car.insert(yes=(1 if _yes else 0))
 
 	def save_feature(self, _area, _vertices, _cx, _cy, _coveredByCar, _region_id):
+		self.open()
 		db.features.insert(area=_area, vertices=_vertices, cx=_cx, cy=_cy, coveredByCar=(1 if _coveredByCar else 0), region_id=_region_id)
 
 	def load_features(self, regid):
-		result = []
-		for row in self.conn.execute('select id, area, vertices, cx, cy, coveredByCar from feature where region_id = ? ', (regid,)):
-			result.append(row)
-		return result
+		self.open()
+		return db(db.features.region_id==regid).select()
 
 	def delete_features(self, region_id):
+		self.open()
 		db(db.features.region_id == region_id).delete()
 
 	def drop_neighbor_state(self, neib_id):
-		with self.conn:
-			self.conn.execute("delete from neighborhood_state where neighbor_id = ?;", (neib_id,))
+		self.open()
+		db(db.neighborhood.neighbor_id == neib_id).delete()
 
 
 
