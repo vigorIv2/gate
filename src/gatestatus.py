@@ -6,7 +6,7 @@ import gatekeeper
 gk=gatekeeper.GateKeeper()
 
 if ( len(sys.argv) < 2 ):
-	print "Usage: gatestatus.py [-v] <[-daemon || -check image || -dedupe img || -diff <img1> <img2>> || -dedupe_all || -train img names comma separated>"
+	print "Usage: gatestatus.py [-v] <[-daemon || -check image || -cleanup || -dedupe img || -diff <img1> <img2>> || -dedupe_all || -train img names comma separated>"
 	sys.exit(0)
 
 visual=False
@@ -18,6 +18,8 @@ if sys.argv[1].lower() == "-diff":
 	print "Similar:", sim
 elif sys.argv[1].lower() == "-train":
 	gk.snapshot_all(sys.argv[2],visual)
+elif sys.argv[1].lower() == "-cleanup":
+	gk.expire()
 elif sys.argv[1].lower() == "-daemon":
 	gk.daemonize()
 elif sys.argv[1].lower() == "-check":

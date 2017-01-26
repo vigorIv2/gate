@@ -26,6 +26,15 @@ class GateKeeper:
 
 	DEFAULT_DEVIATION = 14 # % deviation of area
 
+	def expire(self):
+		few_days_ago_ts=datetime.datetime.now() - datetime.timedelta(days=5)
+		few_days_ago=few_days_ago_ts.strftime('%Y-%m-%d %H:%M:%S')
+		logging.debug("cleaning events older than "+few_days_ago)
+
+		evts=self.gdb.load_events(few_days_ago)
+		for e in evts:
+			print e.filename
+
 	def push_button(self):
 		logging.info("push_button begin")
 		return

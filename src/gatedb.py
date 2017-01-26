@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import os
+cwd = os.getcwd()
 
-sys.path.insert(1, '/home/iotuser/gate/web2py')
+sys.path.insert(1, "%s/web2py" % cwd)
 
 from gluon import DAL, Field
 from gluon.validators import IS_NOT_EMPTY, IS_EMAIL, IS_NOT_IN_DB, IS_INT_IN_RANGE
@@ -14,8 +16,8 @@ def opendb():
 	global db
 	if ( db == None ):
 #		print "open database DAL"
-		db = DAL('sqlite://storage.sqlite', folder='/home/iotuser/gate/web2py/applications/gate/databases')
-		execfile('/home/iotuser/gate/web2py/applications/gate/models/db_gate.py')
+		db = DAL('sqlite://storage.sqlite', folder="%s/web2py/applications/gate/databases" % cwd)
+		execfile("%s/web2py/applications/gate/models/db_gate.py" % cwd)
 
 def closedb():
 	global db
@@ -66,9 +68,13 @@ class gatedb:
 #		if row == None : return True
 		return row.closed
 
-	def get_region(self,regname):
+	def get_region(self, regname):
 		self.open()
 		return db(db.region.name == regname).select()[0]
+
+	def load_events(self, before_time):
+		self.open()
+		return db(db.security.time_stamp < before_time).select()
 
 	def oui_vendor(self,_oui):
 		self.open()
