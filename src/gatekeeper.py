@@ -33,7 +33,17 @@ class GateKeeper:
 
 		evts=self.gdb.load_events(few_days_ago)
 		for e in evts:
-			print e.filename
+			if os.path.exists(e.filename):
+				os.remove(e.filename)
+				logging.info("Removed expired file "+ e.filename)
+				self.gdb.drop_event(e.id)
+		now_ts=datetime.datetime.now()
+		now=now_ts.strftime('%Y-%m-%d %H:%M:%S')
+		evts2=self.gdb.load_events(now)
+		for e in evts2:
+			if not os.path.exists(e.filename):
+				logging.info("Removing record about missing file "+ e.filename)
+				self.gdb.drop_event(e.id)
 
 	def push_button(self):
 		logging.info("push_button begin")

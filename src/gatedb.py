@@ -116,5 +116,9 @@ class gatedb:
 		self.open()
 		db(db.neighborhood.neighbor_id == neib_id).delete()
 
+	def drop_event(self, evt_id):
+		self.open()
+		db(db.security.id == evt_id).delete()
+
 
 
