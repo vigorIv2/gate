@@ -1,0 +1,10 @@
+{{extend 'layout.html'}}
+{{block header}}
+    <header class="container-fluid background">
+    </header>
+{{end}}
+{{=BEAUTIFY(response._vars)}}
+<h2>
+Camera view
+</h2>
+<img src='http://192.168.0.114:8081/'></img>

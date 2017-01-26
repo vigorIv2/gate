@@ -21,6 +21,10 @@ def index():
     return dict(message=T('Welcome to web2py!'))
 
 
+def status():
+    return HTML(BODY(H1(T('Hello Status World'),_style="color: red;"),H3('Subheader h3'))).xml() # .xml to serialize
+
+
 def user():
     """
     exposes:
@@ -57,5 +61,3 @@ def call():
     supports xml, json, xmlrpc, jsonrpc, amfrpc, rss, csv
     """
     return service()
-
-

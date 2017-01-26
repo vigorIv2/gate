@@ -62,8 +62,8 @@ class gatedb:
 	def gate(self):
 		self.open()
 		row=db().select(db.gate.ALL,orderby=~db.gate.id, limitby=(0, 1) ).first()
-#		print "gate.row=", row
-		if row == None : return True
+		print "gate.row=", row
+#		if row == None : return True
 		return row.closed
 
 	def get_region(self,regname):
@@ -77,8 +77,8 @@ class gatedb:
 	def car(self):
 		self.open()
 		row=db().select(db.car.ALL, orderby=~db.car.id, limitby=(0, 1)).first()
-#		print "car.row=", row
-		if row == None : return True
+		print "car.row=", row
+#		if row == None : return True
 		return row.yes
 
 	def save_gate(self, _closed=False): # 0 - False, 1 - True
