@@ -12,8 +12,6 @@ import gatedb
 import re
 import datetime
 
-import RPi.GPIO as GPIO ## Import GPIO library
-
 class GateKeeper:
 	' base class for GateKeeper software '
 
@@ -48,6 +46,7 @@ class GateKeeper:
 	def push_button(self):
 		logging.info("push_button begin")
 		return
+		import RPi.GPIO as GPIO ## Import GPIO library
 
 		GPIO.setwarnings(False)
 		GPIO.setmode(GPIO.BOARD)
@@ -112,7 +111,7 @@ class GateKeeper:
 			return False
 		if not vertices in (3,5,8,7): # wrong shape - ignore
 			return False
-		MIN_A = 70
+		MIN_A = 60
 		MAX_A = 800
 		return A >= MIN_A and A <= MAX_A
 
