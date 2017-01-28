@@ -1,2 +1,2 @@
 #!/bin/bash
-sqlite3 /home/iotuser/gate/web2py/applications/gate/databases/storage.sqlite "$@"
+sqlite3 `pwd`/web2py/applications/gate/databases/storage.sqlite "$@"
