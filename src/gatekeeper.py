@@ -218,11 +218,12 @@ class GateKeeper:
 		(car, gate, fcnt)=self.check_features(img, "all", visual)
 		if not gate:
 			car = None
-		if fcnt > 0:
-			if self.gdb.gate() != gate:
-				self.gdb.save_gate(gate)
-			if self.gdb.car() != car:
-				self.gdb.save_car(car)
+		else:
+			if fcnt > 0:
+				if self.gdb.gate() != gate:
+					self.gdb.save_gate(gate)
+				if self.gdb.car() != car:
+					self.gdb.save_car(car)
 
 		self.gdb.close()
 		return car, gate
