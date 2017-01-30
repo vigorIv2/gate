@@ -76,6 +76,10 @@ class gatedb:
 		self.open()
 		return db(db.security.time_stamp < before_time).select()
 
+	def drop_events(self, before_time):
+		self.open()
+		db(db.security.time_stamp < before_time).delete()
+
 	def oui_vendor(self,_oui):
 		self.open()
 		return db(db.oui.oui == _oui).select()
@@ -120,5 +124,10 @@ class gatedb:
 		self.open()
 		db(db.security.id == evt_id).delete()
 
-
+	def is_registered(self, fname):
+		self.open()
+		f=db(db.security.filename == fname).select().first()
+		if f is None: return False
+		return True
+		
 

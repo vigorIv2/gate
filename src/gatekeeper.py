@@ -11,9 +11,13 @@ import cv2
 import gatedb
 import re
 import datetime
+from os import listdir
+from os.path import isfile, join
 
 class GateKeeper:
 	' base class for GateKeeper software '
+
+	pictures_path='/opt/data/motion'
 
 	gdb = None
 
@@ -25,6 +29,8 @@ class GateKeeper:
 	DEFAULT_DEVIATION = 14 # % deviation of area
 
 	def expire(self):
+		self.drop_orphans()
+
 		few_days_ago_ts=datetime.datetime.now() - datetime.timedelta(days=5)
 		few_days_ago=few_days_ago_ts.strftime('%Y-%m-%d %H:%M:%S')
 		logging.debug("cleaning events older than "+few_days_ago)
@@ -34,7 +40,7 @@ class GateKeeper:
 			if os.path.exists(e.filename):
 				os.remove(e.filename)
 				logging.info("Removed expired file "+ e.filename)
-				self.gdb.drop_event(e.id)
+		self.gdb.drop_events(few_days_ago)
 		now_ts=datetime.datetime.now()
 		now=now_ts.strftime('%Y-%m-%d %H:%M:%S')
 		evts2=self.gdb.load_events(now)
@@ -42,6 +48,14 @@ class GateKeeper:
 			if not os.path.exists(e.filename):
 				logging.info("Removing record about missing file "+ e.filename)
 				self.gdb.drop_event(e.id)
+
+	def drop_orphans(self):
+		onlyfiles = [f for f in listdir(self.pictures_path) if isfile(join(self.pictures_path, f))]
+		for f in onlyfiles:
+			p = self.pictures_path + "/" + f
+			if not self.gdb.is_registered(p):
+				logging.info("removing orphan "+p)
+				os.remove(p)
 
 	def push_button(self):
 		logging.info("push_button begin")
