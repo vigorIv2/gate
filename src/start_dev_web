@@ -1,5 +1,5 @@
 #!/bin/bash
 RTE=/home/iotuser/gate/web2py
 cd $RTE
-python web2py.py -p 8000 -i "0.0.0.0" --password="Abc122" --folder="$RTE" \
+python web2py.py -p 8000 -i "0.0.0.0" --password="Qwaspo321" --folder="$RTE" \
 --socket-timeout=10 --timeout=120 -c "$RTE/server.crt" -k "$RTE/server.key"

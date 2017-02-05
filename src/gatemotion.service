@@ -1,0 +1,11 @@
+[Unit]
+Description=Gate Motion Web service
+After=multi-user.target
+
+[Service]
+Type=idle
+WorkingDirectory=/home/iotuser
+ExecStart=/usr/bin/motion
+
+[Install]
+WantedBy=multi-user.target

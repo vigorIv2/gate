@@ -29,8 +29,6 @@ class GateKeeper:
 	DEFAULT_DEVIATION = 14 # % deviation of area
 
 	def expire(self):
-		self.drop_orphans()
-
 		few_days_ago_ts=datetime.datetime.now() - datetime.timedelta(days=5)
 		few_days_ago=few_days_ago_ts.strftime('%Y-%m-%d %H:%M:%S')
 		logging.debug("cleaning events older than "+few_days_ago)
@@ -48,6 +46,8 @@ class GateKeeper:
 			if not os.path.exists(e.filename):
 				logging.info("Removing record about missing file "+ e.filename)
 				self.gdb.drop_event(e.id)
+
+		self.drop_orphans()
 
 	def drop_orphans(self):
 		onlyfiles = [f for f in listdir(self.pictures_path) if isfile(join(self.pictures_path, f))]

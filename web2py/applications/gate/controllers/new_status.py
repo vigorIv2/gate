@@ -12,4 +12,9 @@ def index():
        car_status=DIV(T("Inside"),_style="color: purple; font-weight: bold;")
     else:
        car_status=DIV(T("Outside"),_style="color: blue; font-weight: bold;")
-    return dict(gate=gate_status, car=car_status)
+    tn = db(db.trusted.id == db.neighborhood.neighbor_id).select().first()
+    if tn is None:
+       neighbor_status = DIV(T("Away"),_style="color: black; font-weight: bold;")
+    else:
+       neighbor_status = DIV(T(tn.neighborhood.state+" "+tn.trusted.name),_style="color: black; font-weight: bold;")
+    return dict(gate=gate_status, car=car_status, neighbor=neighbor_status)

@@ -4,7 +4,9 @@ After=multi-user.target
 
 [Service]
 Type=idle
-ExecStart=/usr/bin/python /home/iotuser/gate/web2py/web2py.py -p 443 -i 0.0.0.0 -a Abc123 --folder=/home/iotuser/gate/web2py --socket-timeout=10 --timeout=120 -c "/home/iotuser/gate/web2py/server.crt" -k "/home/iotuser/gate/web2py/server.key" > /var/log/motion/gateweb.log 2>&1
+WorkingDirectory=/home/iotuser/gate
+ExecStart=/usr/bin/python /home/iotuser/gate/web2py/web2py.py -p 443 -i '0.0.0.0' -a Qwaspo321 --folder=/home/iotuser/gate/web2py --socket-timeout=10 --timeout=120 -c "/home/iotuser/gate/web2py/server.crt" -k "/home/iotuser/gate/web2py/server.key" > /var/log/motion/gateweb.log 2>&1
+
 
 [Install]
 WantedBy=multi-user.target

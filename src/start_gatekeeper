@@ -3,15 +3,16 @@ sleep 10
 
 #set -x	
 killall motion
-killall gatestatus.py
+# killall gatestatus.py
 find /opt/data/motion* -empty -type f -exec rm -f {} \;
-rm -r -f /var/log/motion/*.log
+#rm -r -f /var/log/motion/*.log
 
 mkdir -p /var/run/motion
 
 cd /home/iotuser
 fuser /dev/video0 || motion
 
+exit 0
 while true; do
 	dt=`date +%Y%m%d%H%M%S`
   date >> /var/log/motion/start_gatekeeper.log

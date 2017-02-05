@@ -9,6 +9,9 @@ from gluon.validators import IS_NOT_EMPTY, IS_EMAIL, IS_NOT_IN_DB, IS_INT_IN_RAN
 db = DAL('sqlite://storage.sqlite',folder='/home/iotuser/gate/web2py/applications/gate/databases')
 execfile('/home/iotuser/gate/web2py/applications/gate/models/db_gate.py')
 
+tn = db(db.trusted.id == db.neighborhood.neighbor_id).select().first()
+print tn
+
 print db.tables
 print db().select(db.oui.ALL)
-print db().select(db.security.ALL)
+#print db().select(db.security.ALL)
