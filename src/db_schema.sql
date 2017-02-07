@@ -43,8 +43,8 @@ CREATE TABLE if not exists region(
 delete from region;
 insert into region(name,left,upper,right,lower,algorithm) values('all', 0, 0, 480, 640, 1);
 
-insert into region(name,left,upper,right,lower,algorithm) values('car', 0, 280, 310, 640, 1);
-insert into region(name,left,upper,right,lower,algorithm) values('gate', 305, 70, 417, 350, 1);
+-- insert into region(name,left,upper,right,lower,algorithm) values('car', 0, 280, 310, 640, 1);
+-- insert into region(name,left,upper,right,lower,algorithm) values('gate', 305, 70, 417, 350, 1);
 select * from region;
 
 
